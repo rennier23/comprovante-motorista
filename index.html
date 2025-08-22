@@ -65,7 +65,21 @@
       .upload-btn{min-width:100%}
       .row{flex-direction:column}
       .row>*{flex:1 1 auto}
-    }
+    }/* --- ajustes finos do dashboard --- */
+/* espaço entre a linha dos filtros (com o botão Atualizar) e os cards */
+#tab-dash .card > .row:first-of-type { margin-bottom: 10px; }
+
+/* reduzir levemente os dois cards KPI */
+#tab-dash .card.color-1,
+#tab-dash .card.color-2 {
+  padding: 12px;         /* era ~16px */
+  border-radius: 12px;   /* um pouco menor */
+}
+
+/* números um pouco menores */
+#kpiTotal,
+#kpiRegs { font-size: 24px !important; }  /* era ~28px */
+
   </style>
 </head>
 <body>
