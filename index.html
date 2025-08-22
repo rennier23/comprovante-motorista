@@ -38,12 +38,22 @@
     .image-preview img{max-width:200px;max-height:150px;border-radius:8px;border:1px solid var(--bd)}
     .image-preview .remove-btn{margin-left:10px;background:#ef4444;border-color:#ef4444;padding:6px 10px;font-size:12px}
     
-    /* Estilos para cards coloridos */
-    .card.color-1{background:#e0f7fa;border-color:#b2ebf2}
-    .card.color-2{background:#fff3e0;border-color:#ffe0b2}
-    .card.color-3{background:#e8f5e9;border-color:#c8e6c9}
-    .card.color-4{background:#ede7f6;border-color:#d1c4e9}
-    .card.color-5{background:#ffebee;border-color:#ffcdd2}
+    /* Estilos para cards coloridos com degradê vibrante */
+    .card.color-1{background:linear-gradient(135deg, #42a5f5 0%, #1976d2 100%);border:none;color:#fff !important}
+    .card.color-1 .muted{color:#fff !important;opacity:0.9}
+    .card.color-1 div{color:#fff !important}
+    .card.color-2{background:linear-gradient(135deg, #a55eea 0%, #8b5cf6 100%);border:none;color:#fff !important}
+    .card.color-2 .muted{color:#fff !important;opacity:0.9}
+    .card.color-2 div{color:#fff !important}
+    .card.color-3{background:linear-gradient(135deg, #26de81 0%, #20bf6b 100%);border:none;color:#fff !important}
+    .card.color-3 .muted{color:#fff !important;opacity:0.9}
+    .card.color-3 div{color:#fff !important}
+    .card.color-4{background:linear-gradient(135deg, #fd79a8 0%, #e84393 100%);border:none;color:#fff !important}
+    .card.color-4 .muted{color:#fff !important;opacity:0.9}
+    .card.color-4 div{color:#fff !important}
+    .card.color-5{background:linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);border:none;color:#fff !important}
+    .card.color-5 .muted{color:#fff !important;opacity:0.9}
+    .card.color-5 div{color:#fff !important}
     
     table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--bd);padding:8px 6px;text-align:left;font-size:14px}
     th{font-size:12px;color:#555}.muted{color:#666;font-size:12px}.tot{font-weight:700}
@@ -198,6 +208,7 @@ document.addEventListener('DOMContentLoaded', function(){
   // ---------- Utils ----------
   const LSKEY = 'comprovantes_local';
   const fmtData = s => s ? new Date(s).toLocaleDateString('pt-BR') : "";
+  const fmtDataGrafico = s => s ? new Date(s).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'}) : "";
   const hojeISO = new Date().toISOString().slice(0,10);
   ['data','ini','fim','dIni','dFim'].forEach(id=>document.getElementById(id).value=hojeISO);
 
@@ -398,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function(){
     chart = new Chart(ctx, {
       plugins: [ChartDataLabels],
       type:'line',
-      data:{ labels: labels.map(x=> grp==='data'?fmtData(x):x), datasets:[{label:'Paletes', data, tension: 0.4, fill: false, borderColor: 'var(--pri)', backgroundColor: 'var(--pri)'}] },
+      data:{ labels: labels.map(x=> grp==='data'?fmtDataGrafico(x):x), datasets:[{label:'Paletes', data, tension: 0.4, fill: false, borderColor: 'var(--pri)', backgroundColor: 'var(--pri)'}] },
       options:{ responsive:true, plugins:{legend:{display:false}, datalabels: { anchor: 'end', align: 'top', formatter: (value) => value } }, scales:{y:{beginAtZero:true}} }
     });
   }
