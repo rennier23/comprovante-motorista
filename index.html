@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Comprovante do Motorista (MVP Local)</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <!-- Font Awesome para ícones modernos -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -36,6 +37,13 @@
     .image-preview{margin-top:10px;display:none}
     .image-preview img{max-width:200px;max-height:150px;border-radius:8px;border:1px solid var(--bd)}
     .image-preview .remove-btn{margin-left:10px;background:#ef4444;border-color:#ef4444;padding:6px 10px;font-size:12px}
+    
+    /* Estilos para cards coloridos */
+    .card.color-1{background:#e0f7fa;border-color:#b2ebf2}
+    .card.color-2{background:#fff3e0;border-color:#ffe0b2}
+    .card.color-3{background:#e8f5e9;border-color:#c8e6c9}
+    .card.color-4{background:#ede7f6;border-color:#d1c4e9}
+    .card.color-5{background:#ffebee;border-color:#ffcdd2}
     
     table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--bd);padding:8px 6px;text-align:left;font-size:14px}
     th{font-size:12px;color:#555}.muted{color:#666;font-size:12px}.tot{font-weight:700}
@@ -156,11 +164,11 @@
       </div>
 
       <div class="row">
-        <div class="card">
+        <div class="card color-1">
           <div class="muted"><i class="fas fa-boxes"></i> Total de paletes</div>
           <div style="font-size:28px;font-weight:800" id="kpiTotal">0</div>
         </div>
-        <div class="card">
+        <div class="card color-2">
           <div class="muted"><i class="fas fa-list-ol"></i> Registros</div>
           <div style="font-size:28px;font-weight:800" id="kpiRegs">0</div>
         </div>
@@ -388,9 +396,10 @@ document.addEventListener('DOMContentLoaded', function(){
     const ctx = document.getElementById('graf');
     if(chart) chart.destroy();
     chart = new Chart(ctx, {
-      type:'bar',
-      data:{ labels: labels.map(x=> grp==='data'?fmtData(x):x), datasets:[{label:'Paletes', data}] },
-      options:{ responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+      plugins: [ChartDataLabels],
+      type:'line',
+      data:{ labels: labels.map(x=> grp==='data'?fmtData(x):x), datasets:[{label:'Paletes', data, tension: 0.4, fill: false, borderColor: 'var(--pri)', backgroundColor: 'var(--pri)'}] },
+      options:{ responsive:true, plugins:{legend:{display:false}, datalabels: { anchor: 'end', align: 'top', formatter: (value) => value } }, scales:{y:{beginAtZero:true}} }
     });
   }
 
