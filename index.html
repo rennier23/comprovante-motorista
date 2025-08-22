@@ -49,15 +49,6 @@
       .row>*{flex:1 1 auto}
     }
   </style>
-  <!-- Supabase SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const SUPABASE_URL = "https://iazdknwffvdjxncsvvls.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlhemRrbndmZnZkanhuY3N2dmxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4ODYyNDksImV4cCI6MjA3MTQ2MjI0OX0.lBjj_IywnMKauk4rvCE3Tdb2S6X3sLJd-A44XgJSPYw";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const BUCKET = "comprovantes";
-  </script>
-
 </head>
 <body>
 <header>
@@ -87,17 +78,13 @@
         <div><label><i class="fas fa-signature"></i> Assinatura/PCO (texto)</label><input id="assinatura" placeholder="Nome do PCO / observação"></div>
         <div>
           <label><i class="fas fa-camera"></i> Foto do comprovante</label>
-          <div class="upload-container">
-            <button type="button" class="btn upload-btn" id="btnCamera">
+          <div class="upload-container" style="justify-content:flex-start">
+            <button type="button" class="btn upload-btn compact" id="btnCamera" style="flex:none;width:auto;min-width:140px;max-width:200px">
               <i class="fas fa-camera"></i>
               Tirar Foto
             </button>
-            <button type="button" class="btn secondary upload-btn" id="btnUpload">
-              <i class="fas fa-upload"></i>
-              Escolher Arquivo
-              <input type="file" id="foto" accept="image/*">
-            </button>
           </div>
+          <input type="file" id="foto" accept="image/*" style="display:none;">
           <div class="image-preview" id="imagePreview">
             <img id="previewImg" src="" alt="Preview">
             <button type="button" class="btn remove-btn" id="btnRemove">
@@ -188,6 +175,8 @@
 </main>
 
 <script>
+document.addEventListener('DOMContentLoaded', function(){
+
   // ---------- Navegação ----------
   document.querySelectorAll('nav button').forEach(b=>{
     b.onclick=()=>{
@@ -225,58 +214,23 @@
       reader.onerror=reject; reader.readAsDataURL(file);
     });
   }
-  // Converte DataURL -> Blob
-  async function dataUrlToBlob(dataUrl){
-    const res = await fetch(dataUrl);
-    return await res.blob();
-  }
-
-  // Upload da foto para o Supabase Storage e retorna URLs
-  async function uploadFotoSupabase(file, dataISO, placa){
-    const dataUrl = await fileToDataURL(file, 1280, 0.82);
-    const blob = await dataUrlToBlob(dataUrl);
-    const ts = Date.now();
-    const safePlaca = (placa||'SEMPLACA').replace(/\W+/g,'').toUpperCase();
-    const folder = dataISO || new Date().toISOString().slice(0,10);
-    const path = `${folder}/${safePlaca}-${ts}.jpg`;
-    const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, blob, { contentType: 'image/jpeg', upsert: false });
-    if (upErr) throw upErr;
-    const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-    return { foto_url: data.publicUrl, foto_path: path };
-  }
-
 
   // ---------- Funcionalidade de Upload e Câmera ----------
   let selectedFile = null;
   
   // Botão para tirar foto (câmera)
   document.getElementById('btnCamera').onclick = () => {
-    // Criar input temporário para captura de câmera
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
+    // Usar o input file oculto para captura de câmera
+    const input = document.getElementById('foto');
     input.capture = 'environment'; // Usar câmera traseira no mobile
-    
-    input.onchange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        handleFileSelection(file, 'camera');
-      }
-    };
-    
     input.click();
-  };
-  
-  // Botão para escolher arquivo
-  document.getElementById('btnUpload').onclick = () => {
-    document.getElementById('foto').click();
   };
   
   // Handler para seleção de arquivo
   document.getElementById('foto').onchange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      handleFileSelection(file, 'upload');
+      handleFileSelection(file, 'camera');
     }
   };
   
@@ -293,21 +247,10 @@
       previewImg.src = dataUrl;
       preview.style.display = 'block';
       
-      // Atualizar visual dos botões
+      // Atualizar visual do botão
       const cameraBtn = document.getElementById('btnCamera');
-      const uploadBtn = document.getElementById('btnUpload');
-      
-      if (source === 'camera') {
-        cameraBtn.classList.add('success');
-        cameraBtn.innerHTML = '<i class="fas fa-check"></i> Foto Capturada';
-        uploadBtn.classList.remove('success');
-        uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Escolher Arquivo';
-      } else {
-        uploadBtn.classList.add('success');
-        uploadBtn.innerHTML = '<i class="fas fa-check"></i> Arquivo Selecionado';
-        cameraBtn.classList.remove('success');
-        cameraBtn.innerHTML = '<i class="fas fa-camera"></i> Tirar Foto';
-      }
+      cameraBtn.classList.add('success');
+      cameraBtn.innerHTML = '<i class="fas fa-check"></i> Foto Capturada';
       
     } catch (error) {
       console.error('Erro ao processar arquivo:', error);
@@ -321,19 +264,14 @@
     document.getElementById('foto').value = '';
     document.getElementById('imagePreview').style.display = 'none';
     
-    // Resetar botões
+    // Resetar botão
     const cameraBtn = document.getElementById('btnCamera');
-    const uploadBtn = document.getElementById('btnUpload');
-    
     cameraBtn.classList.remove('success');
     cameraBtn.innerHTML = '<i class="fas fa-camera"></i> Tirar Foto';
-    uploadBtn.classList.remove('success');
-    uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Escolher Arquivo';
   };
 
   // ---------- Salvar ----------
-  
-document.getElementById('btnSalvar').onclick = async ()=>{
+  document.getElementById('btnSalvar').onclick = async ()=>{
     const msg = document.getElementById('msg');
     msg.textContent = "Processando…";
 
@@ -344,26 +282,24 @@ document.getElementById('btnSalvar').onclick = async ()=>{
     const qtde = parseInt(document.getElementById('qtde').value||"0",10);
     const assinatura = document.getElementById('assinatura').value.trim();
 
-    if(!cliente || !data || !motorista || !placa || !(qtde>=0) || !selectedFile){
+    if(!cliente || !data || !motorista || !placa || !qtde || !selectedFile){
       msg.textContent = "Preencha todos os campos obrigatórios e selecione uma foto.";
       return;
     }
 
     try{
-      const { foto_url, foto_path } = await uploadFotoSupabase(selectedFile, data, placa);
-      const { error: dbErr } = await supabase.from('comprovantes').insert([{
-        data, cliente, motorista, placa, qtde, assinatura, foto_url, foto_path
-      }]);
-      if (dbErr) throw dbErr;
-      msg.textContent = "Registro salvo!";
+      const foto_url = await fileToDataURL(selectedFile); // base64 comprimido
+      const rec = { id: Date.now(), cliente, data, motorista, placa, qtde, assinatura, foto_url };
+      const db = getDB(); db.push(rec); setDB(db);
+      msg.textContent = "Registro salvo (local).";
       document.getElementById('btnLimpar').click();
-      await carregarRegistros(); await carregarDash();
+      carregarRegistros(); carregarDash();
     }catch(e){
-      console.error(e); msg.textContent = "Erro ao salvar. Veja o console.";
-      alert('Erro ao salvar: ' + (e.message || e.statusText || e));
+      console.error(e); msg.textContent = "Erro ao processar a foto.";
     }
   };
-document.getElementById('btnLimpar').onclick = ()=>{
+
+  document.getElementById('btnLimpar').onclick = ()=>{
     ['cliente','data','motorista','placa','qtde','assinatura'].forEach(id=>{
       document.getElementById(id).value="";
     });
@@ -393,26 +329,8 @@ document.getElementById('btnLimpar').onclick = ()=>{
     }).sort((a,b)=>b.data.localeCompare(a.data) || b.id-a.id);
   }
 
-  
-async function carregarRegistros(){
-    const ini = document.getElementById('ini').value;
-    const fim = document.getElementById('fim').value;
-    const fCliente = document.getElementById('fCliente').value.trim();
-    const q = document.getElementById('busca').value.trim().toLowerCase();
-
-    let qy = supabase.from('comprovantes').select('*')
-      .order('data', { ascending:false })
-      .order('id', { ascending:false })
-      .limit(1000);
-    if (ini) qy = qy.gte('data', ini);
-    if (fim) qy = qy.lte('data', fim);
-    if (fCliente) qy = qy.ilike('cliente', `%${fCliente}%`);
-
-    const { data, error } = await qy;
-    if (error) { console.error(error); return; }
-
-    const rows = q ? data.filter(r => (`${r.cliente} ${r.motorista} ${r.placa}`.toLowerCase().includes(q))) : data;
-
+  function carregarRegistros(){
+    const rows = aplicarFiltros(getDB());
     const tb = document.querySelector('#tbl tbody'); tb.innerHTML="";
     let tot=0;
     rows.forEach(r=>{
@@ -428,24 +346,22 @@ async function carregarRegistros(){
     });
     document.getElementById('totQtde').textContent = tot;
   }
-document.getElementById('btnFiltrar').onclick = carregarRegistros;
+  document.getElementById('btnFiltrar').onclick = carregarRegistros;
 
   // ---------- Dashboard ----------
   let chart;
-  
-let chart;
-async function carregarDash(){
+  function carregarDash(){
     const di = document.getElementById('dIni').value;
     const df = document.getElementById('dFim').value;
     const grp = document.getElementById('agrup').value;
-    const fCli = document.getElementById('dCliente').value.trim();
+    const fCli = document.getElementById('dCliente').value.trim().toLowerCase();
 
-    let qy = supabase.from('comprovantes').select('*');
-    if (di) qy = qy.gte('data', di);
-    if (df) qy = qy.lte('data', df);
-    if (fCli) qy = qy.ilike('cliente', `%${fCli}%`);
-    const { data: base, error } = await qy;
-    if (error) { console.error(error); return; }
+    const base = getDB().filter(r=>{
+      if(di && r.data < di) return false;
+      if(df && r.data > df) return false;
+      if(fCli && !r.cliente?.toLowerCase().includes(fCli)) return false;
+      return true;
+    });
 
     const map = new Map();
     base.forEach(r=>{
@@ -453,13 +369,14 @@ async function carregarDash(){
       map.set(key, (map.get(key)||0) + (r.qtde||0));
     });
 
-    const labels = Array.from(map.keys()).sort((a,b)=> grp==='data'? a.localeCompare(b) : a.localeCompare(b,'pt-BR',{numeric:true}));
+    const labels = Array.from(map.keys()).sort((a,b)=> grp==='data' ? a.localeCompare(b) : a.localeCompare(b,'pt-BR',{numeric:true}));
     const data = labels.map(k=>map.get(k));
     const soma = data.reduce((a,b)=>a+b,0);
 
     document.getElementById('kpiTotal').textContent = soma;
     document.getElementById('kpiRegs').textContent = base.length;
 
+    // tabela
     const tb = document.querySelector('#tblDash tbody'); tb.innerHTML="";
     labels.forEach((l,i)=>{
       const tr=document.createElement('tr');
@@ -467,6 +384,7 @@ async function carregarDash(){
       tb.appendChild(tr);
     });
 
+    // gráfico
     const ctx = document.getElementById('graf');
     if(chart) chart.destroy();
     chart = new Chart(ctx, {
@@ -475,9 +393,12 @@ async function carregarDash(){
       options:{ responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
     });
   }
-// inicial
+
+  // inicial
   carregarRegistros(); carregarDash();
   document.getElementById('btnDash').onclick = carregarDash;
+
+});
 </script>
 </body>
 </html>
