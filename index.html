@@ -1,415 +1,448 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Comprovante do Motorista</title>
-  <meta name="description" content="Sistema de gestão de comprovantes para motoristas - Controle de paletes e documentação de entregas." />
-  
-  <!-- Dependências de Estilo e Scripts -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Comprovante do Motorista (MVP Local)</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-
-  <style type="text/tailwindcss">
-    @layer base {
-      :root {
-        --background: 0 0% 100%;
-        --foreground: 222.2 84% 4.9%;
-        --card: 0 0% 100%;
-        --card-foreground: 222.2 84% 4.9%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 222.2 84% 4.9%;
-        --primary: 221.2 83.2% 53.3%;
-        --primary-foreground: 210 40% 98%;
-        --secondary: 210 40% 96%;
-        --secondary-foreground: 222.2 84% 4.9%;
-        --muted: 210 40% 96%;
-        --muted-foreground: 215.4 16.3% 46.9%;
-        --accent: 210 40% 96%;
-        --accent-foreground: 222.2 84% 4.9%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 210 40% 98%;
-        --border: 214.3 31.8% 91.4%;
-        --input: 214.3 31.8% 91.4%;
-        --ring: 221.2 83.2% 53.3%;
-        --radius: 0.75rem;
-        --brand-900: 221 83% 25%;
-        --brand-800: 221 83% 35%;
-        --brand-700: 221 83% 45%;
-        --brand-600: 221 83% 53%;
-        --brand-500: 221 83% 63%;
-        --brand-300: 221 83% 73%;
-        --brand-200: 221 83% 83%;
-        --brand-100: 221 83% 93%;
-        --brand-50: 221 83% 97%;
-        --success: 142 76% 36%;
-        --warning: 38 92% 50%;
-      }
-      body {
-        font-family: 'Inter', system-ui, sans-serif;
-      }
-    }
-  </style>
-  <script>
-    // Configuração do Tailwind CSS para usar as cores e fontes personalizadas
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              900: 'hsl(var(--brand-900 ))', 800: 'hsl(var(--brand-800))',
-              700: 'hsl(var(--brand-700))', 600: 'hsl(var(--brand-600))',
-              500: 'hsl(var(--brand-500))', 300: 'hsl(var(--brand-300))',
-              200: 'hsl(var(--brand-200))', 100: 'hsl(var(--brand-100))',
-              50: 'hsl(var(--brand-50))',
-            },
-            success: 'hsl(var(--success))',
-            destructive: 'hsl(var(--destructive))',
-          },
-          boxShadow: {
-            soft: '0 2px 8px -2px hsl(221 83% 53% / 0.08)',
-            glow: '0 0 24px hsl(221 83% 53% / 0.2)',
-          },
-          backgroundImage: {
-            'gradient-brand': 'linear-gradient(135deg, hsl(var(--brand-600)), hsl(var(--brand-500)))',
-          }
-        }
-      }
-    }
-  </script>
-</head>
-
-<body class="bg-gradient-to-br from-brand-50 via-white to-brand-50">
-
-  <!-- Header -->
-  <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-lg border-b shadow-soft">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
-        <div class="flex items-center gap-3">
-          <div class="bg-gradient-brand p-2 rounded-xl text-white"><i class="fa-solid fa-truck fa-fw"></i></div>
-          <h1 class="text-xl font-semibold text-brand-900">Comprovante do Motorista</h1>
-        </div>
-        <nav class="flex items-center gap-2">
-          <button data-tab="tab-registro" class="nav-btn active"><i class="fa-solid fa-plus fa-fw mr-2"></i><span class="hidden sm:inline">Registrar</span></button>
-          <button data-tab="tab-registros" class="nav-btn"><i class="fa-solid fa-list fa-fw mr-2"></i><span class="hidden sm:inline">Registros</span></button>
-          <button data-tab="tab-dash" class="nav-btn"><i class="fa-solid fa-chart-bar fa-fw mr-2"></i><span class="hidden sm:inline">Dashboard</span></button>
-        </nav>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+  <!-- Font Awesome para ícones modernos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root{--pri:#0b6efd;--bg:#f6f7fb;--card:#fff;--bd:#e6e8ef;--success:#10b981;--warning:#f59e0b}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,Arial;background:var(--bg )}
+    header{padding:14px 16px;background:#fff;border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center}
+    header h1{font-size:18px;margin:0 8px 0 0}
+    nav button{border:1px solid var(--bd);background:#fff;padding:8px 12px;border-radius:10px;cursor:pointer}
+    nav button.active{background:var(--pri);color:#fff;border-color:var(--pri)}
+    main{max-width:1050px;margin:18px auto;padding:0 16px 56px}
+    .grid{display:grid;gap:14px}.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1 1 220px}
+    label{font-size:12px;font-weight:600;display:block;margin:10px 0 6px}
+    input,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:10px;background:#fff}
+    .btn{padding:10px 14px;border-radius:10px;border:1px solid var(--pri);background:var(--pri);color:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-size:14px;transition:all 0.2s ease}
+    .btn.compact{padding:8px 12px;font-size:13px}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(11,110,253,0.3)}
+    .btn.secondary{background:#fff;color:#111;border-color:var(--bd)}
+    .btn.secondary:hover{background:#f8f9fa;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
     
-    <!-- Seção de Registro -->
-    <section id="tab-registro" class="space-y-6">
-      <div class="bg-white/60 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-soft p-6">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-brand-900 mb-6"><i class="fa-solid fa-file-plus fa-fw"></i>Novo comprovante</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div><label class="flex items-center gap-2 text-sm font-medium text-brand-800 mb-2"><i class="fa-solid fa-building fa-fw"></i>Cliente</label><input id="cliente" placeholder="Ex.: SAPORE" class="w-full p-2 border border-brand-200 rounded-lg focus:ring-2 focus:ring-brand-500"></div>
-          <div><label class="flex items-center gap-2 text-sm font-medium text-brand-800 mb-2"><i class="fa-solid fa-calendar fa-fw"></i>Data</label><input id="data" type="date" class="w-full p-2 border border-brand-200 rounded-lg focus:ring-2 focus:ring-brand-500"></div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div><label class="flex items-center gap-2 text-sm font-medium text-brand-800 mb-2"><i class="fa-solid fa-user fa-fw"></i>Motorista</label><input id="motorista" class="w-full p-2 border border-brand-200 rounded-lg focus:ring-2 focus:ring-brand-500"></div>
-          <div><label class="flex items-center gap-2 text-sm font-medium text-brand-800 mb-2"><i class="fa-solid fa-car fa-fw"></i>Placa</label><input id="placa" class="w-full p-2 border border-brand-200 rounded-lg focus:ring-2 focus:ring-brand-500"></div>
-          <div><label class="flex items-center gap-2 text-sm font-medium text-brand-800 mb-2"><i class="fa-solid fa-box fa-fw"></i>QTDE (paletes)</label><input id="qtde" type="number" min="0" class="w-full p-2 border border-brand-200 rounded-lg focus:ring-2 focus:ring-brand-500"></div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div><label class="flex items-center gap-2 text-sm font-medium text-brand-800 mb-2"><i class="fa-solid fa-signature fa-fw"></i>Assinatura/PCO</label><input id="assinatura" placeholder="Nome do PCO / observação" class="w-full p-2 border border-brand-200 rounded-lg focus:ring-2 focus:ring-brand-500"></div>
-          <div>
-            <label class="flex items-center gap-2 text-sm font-medium text-brand-800 mb-2"><i class="fa-solid fa-camera fa-fw"></i>Foto do comprovante</label>
-            <button id="btnCamera" class="w-full flex items-center justify-center gap-2 p-2 rounded-lg bg-gradient-brand text-white hover:shadow-glow transition-all"><i class="fa-solid fa-camera fa-fw"></i>Tirar Foto</button>
-            <input type="file" id="foto" accept="image/*" class="hidden">
-            <div id="imagePreview" class="hidden mt-4 flex items-center gap-3 p-3 bg-brand-50 rounded-xl">
-              <img id="previewImg" src="" alt="Preview" class="h-20 w-20 object-cover rounded-lg border-2 border-brand-200">
-              <button id="btnRemove" class="ml-auto p-2 bg-destructive text-white rounded-lg"><i class="fa-solid fa-trash-can fa-fw"></i></button>
-            </div>
+    /* Estilos para os botões de upload */
+    .upload-container{display:flex;gap:10px;flex-wrap:wrap}
+    .upload-btn{flex:1;min-width:140px;justify-content:center;position:relative;overflow:hidden}
+    .upload-btn input[type="file"]{position:absolute;left:-9999px;opacity:0}
+    .upload-btn.success{background:var(--success);border-color:var(--success)}
+    .upload-btn.success:hover{box-shadow:0 4px 12px rgba(16,185,129,0.3)}
+    
+    /* Preview da imagem */
+    .image-preview{margin-top:10px;display:none}
+    .image-preview img{max-width:200px;max-height:150px;border-radius:8px;border:1px solid var(--bd)}
+    .image-preview .remove-btn{margin-left:10px;background:#ef4444;border-color:#ef4444;padding:6px 10px;font-size:12px}
+    
+    /* Estilos para cards coloridos com degradê vibrante */
+    .card.color-1{background:linear-gradient(135deg, #42a5f5 0%, #1976d2 100%);border:none;color:#fff !important}
+    .card.color-1 .muted{color:#fff !important;opacity:0.9}
+    .card.color-1 div{color:#fff !important}
+    .card.color-2{background:linear-gradient(135deg, #a55eea 0%, #8b5cf6 100%);border:none;color:#fff !important}
+    .card.color-2 .muted{color:#fff !important;opacity:0.9}
+    .card.color-2 div{color:#fff !important}
+    .card.color-3{background:linear-gradient(135deg, #26de81 0%, #20bf6b 100%);border:none;color:#fff !important}
+    .card.color-3 .muted{color:#fff !important;opacity:0.9}
+    .card.color-3 div{color:#fff !important}
+    .card.color-4{background:linear-gradient(135deg, #fd79a8 0%, #e84393 100%);border:none;color:#fff !important}
+    .card.color-4 .muted{color:#fff !important;opacity:0.9}
+    .card.color-4 div{color:#fff !important}
+    .card.color-5{background:linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);border:none;color:#fff !important}
+    .card.color-5 .muted{color:#fff !important;opacity:0.9}
+    .card.color-5 div{color:#fff !important}
+    
+    table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--bd);padding:8px 6px;text-align:left;font-size:14px}
+    th{font-size:12px;color:#555}.muted{color:#666;font-size:12px}.tot{font-weight:700}
+    .thumb{width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--bd); cursor: pointer;} /* Adicionado cursor: pointer */
+    
+    /* Responsividade para mobile */
+    @media (max-width: 768px) {
+      .upload-container{flex-direction:column}
+      .upload-btn{min-width:100%}
+      .row{flex-direction:column}
+      .row>*{flex:1 1 auto}
+    }/* --- ajustes finos do dashboard --- */
+/* espaço entre a linha dos filtros (com o botão Atualizar) e os cards */
+#tab-dash .card > .row:first-of-type { margin-bottom: 10px; }
+
+/* reduzir levemente os dois cards KPI */
+#tab-dash .card.color-1,
+#tab-dash .card.color-2 {
+  padding: 12px;         /* era ~16px */
+  border-radius: 12px;   /* um pouco menor */
+}
+
+/* números um pouco menores */
+#kpiTotal,
+#kpiRegs { font-size: 24px !important; }  /* era ~28px */
+
+  </style>
+</head>
+<body>
+<header>
+  <h1><i class="fas fa-truck"></i> Comprovante do Motorista</h1>
+  <nav>
+    <button data-tab="tab-registro" class="active"><i class="fas fa-plus"></i> Registrar</button>
+    <button data-tab="tab-registros"><i class="fas fa-list"></i> Registros</button>
+    <button data-tab="tab-dash"><i class="fas fa-chart-bar"></i> Dashboard</button>
+  </nav>
+</header>
+
+<main>
+  <!-- REGISTRAR -->
+  <section id="tab-registro" class="grid">
+    <div class="card">
+      <h2><i class="fas fa-file-plus"></i> Novo comprovante</h2>
+      <div class="row">
+        <div><label><i class="fas fa-building"></i> Cliente</label><input id="cliente" placeholder="Ex.: SAPORE" required></div>
+        <div><label><i class="fas fa-calendar"></i> Data</label><input id="data" type="date" required></div>
+      </div>
+      <div class="row">
+        <div><label><i class="fas fa-user"></i> Motorista</label><input id="motorista" required></div>
+        <div><label><i class="fas fa-car"></i> Placa</label><input id="placa" required></div>
+        <div><label><i class="fas fa-boxes"></i> QTDE (paletes)</label><input id="qtde" type="number" min="0" step="1" required></div>
+      </div>
+      <div class="row">
+        <div><label><i class="fas fa-signature"></i> Assinatura/PCO (texto)</label><input id="assinatura" placeholder="Nome do PCO / observação"></div>
+        <div>
+          <label><i class="fas fa-camera"></i> Foto do comprovante</label>
+          <div class="upload-container" style="justify-content:flex-start">
+            <button type="button" class="btn upload-btn compact" id="btnCamera" style="flex:none;width:auto;min-width:140px;max-width:200px">
+              <i class="fas fa-camera"></i>
+              Tirar Foto
+            </button>
+          </div>
+          <input type="file" id="foto" accept="image/*" style="display:none;">
+          <div class="image-preview" id="imagePreview">
+            <img id="previewImg" src="" alt="Preview">
+            <button type="button" class="btn remove-btn" id="btnRemove">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
         </div>
-        <div class="flex gap-4 pt-4">
-          <button id="btnSalvar" class="flex items-center justify-center gap-2 p-2 px-4 rounded-lg bg-gradient-brand text-white hover:shadow-glow transition-all"><i class="fa-solid fa-save fa-fw"></i>Salvar</button>
-          <button id="btnLimpar" class="flex items-center justify-center gap-2 p-2 px-4 rounded-lg border border-brand-300 text-brand-700 hover:bg-brand-100 transition-all"><i class="fa-solid fa-eraser fa-fw"></i>Limpar</button>
-        </div>
-        <p id="msg" class="mt-4 text-sm text-gray-500"></p>
       </div>
-    </section>
-
-    <!-- Seção de Registros -->
-    <section id="tab-registros" class="hidden space-y-6">
-       <div class="bg-white/60 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-soft p-6">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-brand-900 mb-6"><i class="fa-solid fa-list fa-fw"></i>Registros</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end mb-6">
-          <div class="lg:col-span-2"><label class="flex items-center gap-2 text-sm font-medium text-brand-800 mb-2"><i class="fa-solid fa-search fa-fw"></i>Buscar</label><input id="busca" placeholder="Cliente, motorista, placa..." class="w-full p-2 border border-brand-200 rounded-lg"></div>
-          <div><label class="flex items-center gap-2 text-sm font-medium text-brand-800 mb-2"><i class="fa-solid fa-calendar-alt fa-fw"></i>Data inicial</label><input id="ini" type="date" class="w-full p-2 border border-brand-200 rounded-lg"></div>
-          <div><label class="flex items-center gap-2 text-sm font-medium text-brand-800 mb-2"><i class="fa-solid fa-calendar-alt fa-fw"></i>Data final</label><input id="fim" type="date" class="w-full p-2 border border-brand-200 rounded-lg"></div>
-          <button id="btnFiltrar" class="w-full flex items-center justify-center gap-2 p-2 rounded-lg bg-gradient-brand text-white hover:shadow-glow transition-all"><i class="fa-solid fa-filter fa-fw"></i>Aplicar</button>
-        </div>
-        <div class="rounded-2xl overflow-hidden border border-brand-200 bg-white/80">
-          <table id="tbl" class="w-full text-sm text-left">
-            <thead class="bg-brand-50"><tr class="border-b border-brand-200"><th class="p-3">Data</th><th class="p-3">Cliente</th><th class="p-3">Motorista</th><th class="p-3">Placa</th><th class="p-3">QTDE</th><th class="p-3">Foto</th></tr></thead>
-            <tbody></tbody>
-            <tfoot><tr class="bg-brand-100/50 font-bold text-brand-900"><td colspan="4" class="p-3">Total</td><td id="totQtde" class="p-3">0</td><td class="p-3"></td></tr></tfoot>
-          </table>
-        </div>
+      <div class="row" style="margin-top:12px;justify-content:flex-start;gap:12px">
+        <button class="btn compact" id="btnSalvar" style="flex:none;width:auto;min-width:100px">
+          <i class="fas fa-save"></i>
+          Salvar
+        </button>
+        <button class="btn secondary" id="btnLimpar" style="flex:none;width:auto;min-width:100px">
+          <i class="fas fa-eraser"></i>
+          Limpar
+        </button>
       </div>
-    </section>
+      <p id="msg" class="muted"></p>
+    </div>
+  </section>
 
-    <!-- Seção de Dashboard -->
-    <section id="tab-dash" class="hidden space-y-6">
-      <div class="bg-white/60 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-soft p-6">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-brand-900 mb-6"><i class="fa-solid fa-chart-bar fa-fw"></i>Dashboard</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end mb-6">
-          <div><label class="flex items-center gap-2 text-sm font-medium text-brand-800 mb-2"><i class="fa-solid fa-calendar-alt fa-fw"></i>Início</label><input id="dIni" type="date" class="w-full p-2 border border-brand-200 rounded-lg"></div>
-          <div><label class="flex items-center gap-2 text-sm font-medium text-brand-800 mb-2"><i class="fa-solid fa-calendar-alt fa-fw"></i>Fim</label><input id="dFim" type="date" class="w-full p-2 border border-brand-200 rounded-lg"></div>
-          <div><label class="flex items-center gap-2 text-sm font-medium text-brand-800 mb-2"><i class="fa-solid fa-layer-group fa-fw"></i>Agrupar</label><select id="agrup" class="w-full p-2 border border-brand-200 rounded-lg bg-white"><option value="cliente">Cliente</option><option value="data">Dia</option><option value="motorista">Motorista</option><option value="placa">Placa</option></select></div>
-          <div><label class="flex items-center gap-2 text-sm font-medium text-brand-800 mb-2"><i class="fa-solid fa-building fa-fw"></i>Cliente</label><input id="dCliente" placeholder="Opcional" class="w-full p-2 border border-brand-200 rounded-lg"></div>
-          <button id="btnDash" class="w-full flex items-center justify-center gap-2 p-2 rounded-lg bg-gradient-brand text-white hover:shadow-glow transition-all"><i class="fa-solid fa-sync-alt fa-fw"></i>Atualizar</button>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div class="p-4 rounded-xl text-white" style="background: linear-gradient(135deg, #42a5f5, #1976d2)"><div class="text-sm opacity-90 mb-1"><i class="fa-solid fa-box fa-fw"></i> Total de paletes</div><div id="kpiTotal" class="text-2xl font-bold">0</div></div>
-          <div class="p-4 rounded-xl text-white" style="background: linear-gradient(135deg, #a55eea, #8b5cf6)"><div class="text-sm opacity-90 mb-1"><i class="fa-solid fa-file-alt fa-fw"></i> Registros</div><div id="kpiRegs" class="text-2xl font-bold">0</div></div>
-        </div>
-        <div class="bg-white/80 border border-brand-200 rounded-2xl p-4 mb-6"><canvas id="graf"></canvas></div>
-        <div class="rounded-2xl overflow-hidden border border-brand-200 bg-white/80">
-          <table id="tblDash" class="w-full text-sm text-left">
-            <thead class="bg-brand-50"><tr class="border-b border-brand-200"><th class="p-3">Grupo</th><th class="p-3">Paletes</th></tr></thead>
-            <tbody></tbody>
-          </table>
+  <!-- REGISTROS -->
+  <section id="tab-registros" class="grid" style="display:none">
+    <div class="card">
+      <h2><i class="fas fa-list"></i> Registros</h2>
+      <div class="row">
+        <div><label><i class="fas fa-search"></i> Buscar</label><input id="busca" placeholder="cliente, motorista, placa…"></div>
+        <div><label><i class="fas fa-calendar-alt"></i> Data inicial</label><input id="ini" type="date"></div>
+        <div><label><i class="fas fa-calendar-alt"></i> Data final</label><input id="fim" type="date"></div>
+        <div><label><i class="fas fa-building"></i> Cliente</label><input id="fCliente" placeholder="(opcional)"></div>
+        <div style="align-self:end">
+          <button class="btn" id="btnFiltrar">
+            <i class="fas fa-filter"></i>
+            Aplicar filtros
+          </button>
         </div>
       </div>
-    </section>
-  </main>
+      <table id="tbl">
+        <thead><tr><th>Data</th><th>Cliente</th><th>Motorista</th><th>Placa</th><th>QTDE</th><th>Foto</th></tr></thead>
+        <tbody></tbody>
+        <tfoot><tr><td colspan="4" class="tot">Total</td><td class="tot" id="totQtde">0</td><td></td></tr></tfoot>
+      </table>
+    </div>
+  </section>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // --- Elementos do DOM ---
-      const navButtons = document.querySelectorAll('.nav-btn');
-      const sections = document.querySelectorAll('main > section');
-      const msgEl = document.getElementById('msg');
-      const hojeISO = new Date().toISOString().slice(0, 10);
+  <!-- DASHBOARD -->
+  <section id="tab-dash" class="grid" style="display:none">
+    <div class="card">
+      <h2><i class="fas fa-chart-bar"></i> Dashboard</h2>
+      <div class="row">
+        <div><label><i class="fas fa-calendar-alt"></i> Período (início)</label><input id="dIni" type="date"></div>
+        <div><label><i class="fas fa-calendar-alt"></i> Período (fim)</label><input id="dFim" type="date"></div>
+        <div><label><i class="fas fa-layer-group"></i> Agrupar por</label>
+          <select id="agrup">
+            <option value="cliente">Cliente</option>
+            <option value="data">Dia</option>
+            <option value="motorista">Motorista</option>
+            <option value="placa">Placa</option>
+          </select>
+        </div>
+        <div><label><i class="fas fa-building"></i> Cliente (opcional)</label><input id="dCliente" placeholder="Filtrar por cliente"></div>
+        <div style="align-self:end">
+          <button class="btn" id="btnDash">
+            <i class="fas fa-sync-alt"></i>
+            Atualizar
+          </button>
+        </div>
+      </div>
 
-      // --- Funções Utilitárias ---
-      const LSKEY = 'comprovantes_local_v2';
-      const getDB = () => JSON.parse(localStorage.getItem(LSKEY) || '[]');
-      const setDB = (arr) => localStorage.setItem(LSKEY, JSON.stringify(arr));
-      const fmtData = s => s ? new Date(s + 'T00:00:00').toLocaleDateString('pt-BR') : "";
-      const fmtDataGrafico = s => s ? new Date(s + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : "";
+      <div class="row">
+        <div class="card color-1">
+          <div class="muted"><i class="fas fa-boxes"></i> Total de paletes</div>
+          <div style="font-size:28px;font-weight:800" id="kpiTotal">0</div>
+        </div>
+        <div class="card color-2">
+          <div class="muted"><i class="fas fa-list-ol"></i> Registros</div>
+          <div style="font-size:28px;font-weight:800" id="kpiRegs">0</div>
+        </div>
+      </div>
 
-      // --- Navegação por Abas ---
-      navButtons.forEach(b => {
-        b.onclick = () => {
-          navButtons.forEach(x => x.classList.remove('active', 'bg-gradient-brand', 'text-white', 'shadow-glow'));
-          b.classList.add('active', 'bg-gradient-brand', 'text-white', 'shadow-glow');
-          sections.forEach(s => s.style.display = 'none');
-          document.getElementById(b.dataset.tab).style.display = 'block';
-          if (b.dataset.tab === 'tab-registros') carregarRegistros();
-          if (b.dataset.tab === 'tab-dash') carregarDash();
-        }
-      });
-      
-      // --- Lógica de Registro ---
-      const form = {
-        cliente: document.getElementById('cliente'), data: document.getElementById('data'),
-        motorista: document.getElementById('motorista'), placa: document.getElementById('placa'),
-        qtde: document.getElementById('qtde'), assinatura: document.getElementById('assinatura'),
-        foto: document.getElementById('foto'), btnCamera: document.getElementById('btnCamera'),
-        preview: document.getElementById('imagePreview'), previewImg: document.getElementById('previewImg'),
-        btnRemove: document.getElementById('btnRemove'), btnSalvar: document.getElementById('btnSalvar'),
-        btnLimpar: document.getElementById('btnLimpar')
+      <canvas id="graf"></canvas>
+      <table id="tblDash" style="margin-top:10px">
+        <thead><tr><th>Grupo</th><th>Paletes</th></tr></thead><tbody></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+
+  // ---------- Navegação ----------
+  document.querySelectorAll('nav button').forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      document.querySelectorAll('main>section').forEach(s=>s.style.display='none');
+      document.getElementById(b.dataset.tab).style.display='grid';
+    }
+  });
+
+  // ---------- Utils ----------
+  const LSKEY = 'comprovantes_local';
+  const fmtData = s => s ? new Date(s).toLocaleDateString('pt-BR') : "";
+  const fmtDataGrafico = s => s ? new Date(s).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'}) : "";
+  const hojeISO = new Date().toISOString().slice(0,10);
+  ['data','ini','fim','dIni','dFim'].forEach(id=>document.getElementById(id).value=hojeISO);
+
+  function getDB(){ return JSON.parse(localStorage.getItem(LSKEY)||'[]'); }
+  function setDB(arr){ localStorage.setItem(LSKEY, JSON.stringify(arr)); }
+
+  // Converte imagem para DataURL (e comprime)
+  function fileToDataURL(file, maxW=1200, quality=0.8){
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=()=>{
+        const img=new Image();
+        img.onload=()=>{
+          const ratio = Math.min(1, maxW/img.width);
+          const w = Math.round(img.width*ratio), h = Math.round(img.height*ratio);
+          const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+          const ctx=cv.getContext('2d'); ctx.drawImage(img,0,0,w,h);
+          resolve(cv.toDataURL('image/jpeg', quality));
+        };
+        img.onerror=reject; img.src=reader.result;
       };
-      let selectedFile = null;
-
-      const resetForm = () => {
-        Object.values(form).forEach(el => { if (el.tagName === 'INPUT') el.value = ''; });
-        form.data.value = hojeISO;
-        msgEl.textContent = "";
-        selectedFile = null;
-        form.foto.value = '';
-        form.preview.style.display = 'none';
-        form.btnCamera.classList.remove('bg-success');
-        form.btnCamera.classList.add('bg-gradient-brand');
-        form.btnCamera.innerHTML = '<i class="fa-solid fa-camera fa-fw"></i> Tirar Foto';
-      };
-
-      form.btnCamera.onclick = () => {
-        form.foto.capture = 'environment';
-        form.foto.click();
-      };
-
-      form.foto.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          selectedFile = file;
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            form.previewImg.src = ev.target.result;
-            form.preview.style.display = 'flex';
-            form.btnCamera.classList.add('bg-success');
-            form.btnCamera.classList.remove('bg-gradient-brand');
-            form.btnCamera.innerHTML = '<i class="fa-solid fa-check fa-fw"></i> Foto Capturada';
-          };
-          reader.readAsDataURL(file);
-        }
-      };
-
-      form.btnRemove.onclick = () => {
-        selectedFile = null;
-        form.foto.value = '';
-        form.preview.style.display = 'none';
-        form.btnCamera.classList.remove('bg-success');
-        form.btnCamera.classList.add('bg-gradient-brand');
-        form.btnCamera.innerHTML = '<i class="fa-solid fa-camera fa-fw"></i> Tirar Foto';
-      };
-
-      form.btnSalvar.onclick = async () => {
-        if (!form.cliente.value || !form.data.value || !form.motorista.value || !form.placa.value || !form.qtde.value || !selectedFile) {
-          msgEl.textContent = "Preencha todos os campos e selecione uma foto.";
-          return;
-        }
-        msgEl.textContent = "Processando...";
-        try {
-          const foto_url = await fileToDataURL(selectedFile);
-          const rec = {
-            id: Date.now(), cliente: form.cliente.value.trim(), data: form.data.value,
-            motorista: form.motorista.value.trim(), placa: form.placa.value.trim().toUpperCase(),
-            qtde: parseInt(form.qtde.value, 10), assinatura: form.assinatura.value.trim(), foto_url
-          };
-          const db = getDB(); db.push(rec); setDB(db);
-          msgEl.textContent = "Registro salvo com sucesso!";
-          setTimeout(resetForm, 1500);
-        } catch (e) {
-          msgEl.textContent = "Erro ao processar a foto.";
-          console.error(e);
-        }
-      };
-      
-      form.btnLimpar.onclick = resetForm;
-
-      // --- Lógica de Registros (Tabela) ---
-      const regFiltros = {
-        busca: document.getElementById('busca'), ini: document.getElementById('ini'),
-        fim: document.getElementById('fim'), btn: document.getElementById('btnFiltrar')
-      };
-
-      function carregarRegistros() {
-        const q = regFiltros.busca.value.trim().toLowerCase();
-        const ini = regFiltros.ini.value;
-        const fim = regFiltros.fim.value;
-        
-        const rows = getDB().filter(r => {
-          if (ini && r.data < ini) return false;
-          if (fim && r.data > fim) return false;
-          if (q && !`${r.cliente} ${r.motorista} ${r.placa}`.toLowerCase().includes(q)) return false;
-          return true;
-        }).sort((a, b) => b.data.localeCompare(a.data) || b.id - a.id);
-
-        const tb = document.querySelector('#tbl tbody'); tb.innerHTML = "";
-        let tot = 0;
-        rows.forEach(r => {
-          const tr = document.createElement('tr');
-          tr.className = 'border-b border-brand-200 hover:bg-brand-50';
-          tr.innerHTML = `<td class="p-3">${fmtData(r.data)}</td><td class="p-3">${r.cliente}</td><td class="p-3">${r.motorista}</td><td class="p-3">${r.placa}</td><td class="p-3 font-semibold">${r.qtde}</td><td class="p-3"></td>`;
-          if (r.foto_url) {
-            const img = document.createElement('img');
-            img.src = r.foto_url;
-            img.className = "h-12 w-12 object-cover rounded-lg border border-brand-200 cursor-pointer hover:scale-105 transition-transform";
-            img.onclick = () => openImageModal(r.foto_url, r.cliente, r.data);
-            tr.cells[5].appendChild(img);
-          }
-          tb.appendChild(tr);
-          tot += r.qtde;
-        });
-        document.getElementById('totQtde').textContent = tot;
-      }
-      regFiltros.btn.onclick = carregarRegistros;
-
-      // --- Lógica do Dashboard ---
-      const dashFiltros = {
-        ini: document.getElementById('dIni'), fim: document.getElementById('dFim'),
-        agrup: document.getElementById('agrup'), cliente: document.getElementById('dCliente'),
-        btn: document.getElementById('btnDash')
-      };
-      let chart;
-
-      function carregarDash() {
-        const di = dashFiltros.ini.value, df = dashFiltros.fim.value;
-        const grp = dashFiltros.agrup.value, fCli = dashFiltros.cliente.value.trim().toLowerCase();
-
-        const base = getDB().filter(r => {
-          if (di && r.data < di) return false;
-          if (df && r.data > df) return false;
-          if (fCli && !r.cliente?.toLowerCase().includes(fCli)) return false;
-          return true;
-        });
-
-        const map = new Map();
-        base.forEach(r => {
-          const key = grp === 'data' ? r.data : (r[grp] || '(vazio)');
-          map.set(key, (map.get(key) || 0) + r.qtde);
-        });
-
-        const labels = Array.from(map.keys()).sort((a, b) => grp === 'data' ? a.localeCompare(b) : a.localeCompare(b, 'pt-BR', { numeric: true }));
-        const data = labels.map(k => map.get(k));
-        
-        document.getElementById('kpiTotal').textContent = data.reduce((a, b) => a + b, 0);
-        document.getElementById('kpiRegs').textContent = base.length;
-
-        const tb = document.querySelector('#tblDash tbody'); tb.innerHTML = "";
-        labels.forEach((l, i) => {
-          const tr = document.createElement('tr');
-          tr.className = 'border-b border-brand-200 hover:bg-brand-50';
-          tr.innerHTML = `<td class="p-3">${grp === 'data' ? fmtData(l) : l}</td><td class="p-3 font-semibold">${data[i]}</td>`;
-          tb.appendChild(tr);
-        });
-
-        const ctx = document.getElementById('graf');
-        if (chart) chart.destroy();
-        chart = new Chart(ctx, {
-          plugins: [ChartDataLabels],
-          type: 'line',
-          data: {
-            labels: labels.map(x => grp === 'data' ? fmtDataGrafico(x) : x),
-            datasets: [{ label: 'Paletes', data, tension: 0.4, fill: false, borderColor: 'hsl(221, 83%, 53%)', backgroundColor: 'hsl(221, 83%, 53%)' }]
-          },
-          options: { responsive: true, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', formatter: (v) => v } }, scales: { y: { beginAtZero: true } } }
-        });
-      }
-      dashFiltros.btn.onclick = carregarDash;
-
-      // --- Funções Auxiliares Globais ---
-      function fileToDataURL(file, maxW = 1200, quality = 0.8) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const img = new Image();
-            img.onload = () => {
-              const ratio = Math.min(1, maxW / img.width);
-              const w = Math.round(img.width * ratio), h = Math.round(img.height * ratio);
-              const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-              const ctx = cv.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
-              resolve(cv.toDataURL('image/jpeg', quality));
-            };
-            img.onerror = reject; img.src = reader.result;
-          };
-          reader.onerror = reject; reader.readAsDataURL(file);
-        });
-      }
-
-      function openImageModal(url, cliente, data) {
-        const win = window.open("", "_blank");
-        win.document.write(`<body style="margin:0; background:#222; display:flex; align-items:center; justify-content:center;"><img src="${url}" style="max-width:100%; max-height:100vh;"></body>`);
-        win.document.title = `Comprovante: ${cliente} - ${fmtData(data)}`;
-      }
-
-      // --- Inicialização ---
-      ['data', 'ini', 'fim', 'dIni', 'dFim'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = hojeISO;
-      });
-      resetForm(); // Garante que o formulário comece limpo
+      reader.onerror=reject; reader.readAsDataURL(file);
     });
-  </script>
+  }
+
+  // ---------- Funcionalidade de Upload e Câmera ----------
+  let selectedFile = null;
+  
+  // Botão para tirar foto (câmera)
+  document.getElementById('btnCamera').onclick = () => {
+    // Usar o input file oculto para captura de câmera
+    const input = document.getElementById('foto');
+    input.capture = 'environment'; // Usar câmera traseira no mobile
+    input.click();
+  };
+  
+  // Handler para seleção de arquivo
+  document.getElementById('foto').onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      handleFileSelection(file, 'camera');
+    }
+  };
+  
+  // Função para lidar com a seleção de arquivo
+  async function handleFileSelection(file, source) {
+    try {
+      selectedFile = file;
+      
+      // Mostrar preview
+      const preview = document.getElementById('imagePreview');
+      const previewImg = document.getElementById('previewImg');
+      
+      const dataUrl = await fileToDataURL(file);
+      previewImg.src = dataUrl;
+      preview.style.display = 'block';
+      
+      // Atualizar visual do botão
+      const cameraBtn = document.getElementById('btnCamera');
+      cameraBtn.classList.add('success');
+      cameraBtn.innerHTML = '<i class="fas fa-check"></i> Foto Capturada';
+      
+    } catch (error) {
+      console.error('Erro ao processar arquivo:', error);
+      document.getElementById('msg').textContent = 'Erro ao processar a imagem.';
+    }
+  }
+  
+  // Botão para remover imagem
+  document.getElementById('btnRemove').onclick = () => {
+    selectedFile = null;
+    document.getElementById('foto').value = '';
+    document.getElementById('imagePreview').style.display = 'none';
+    
+    // Resetar botão
+    const cameraBtn = document.getElementById('btnCamera');
+    cameraBtn.classList.remove('success');
+    cameraBtn.innerHTML = '<i class="fas fa-camera"></i> Tirar Foto';
+  };
+
+  // ---------- Salvar ----------
+  document.getElementById('btnSalvar').onclick = async ()=>{
+    const msg = document.getElementById('msg');
+    msg.textContent = "Processando…";
+
+    const cliente = document.getElementById('cliente').value.trim();
+    const data = document.getElementById('data').value;
+    const motorista = document.getElementById('motorista').value.trim();
+    const placa = document.getElementById('placa').value.trim().toUpperCase();
+    const qtde = parseInt(document.getElementById('qtde').value||"0",10);
+    const assinatura = document.getElementById('assinatura').value.trim();
+
+    if(!cliente || !data || !motorista || !placa || !qtde || !selectedFile){
+      msg.textContent = "Preencha todos os campos obrigatórios e selecione uma foto.";
+      return;
+    }
+
+    try{
+      const foto_url = await fileToDataURL(selectedFile); // base64 comprimido
+      const rec = { id: Date.now(), cliente, data, motorista, placa, qtde, assinatura, foto_url };
+      const db = getDB(); db.push(rec); setDB(db);
+      msg.textContent = "Registro salvo (local).";
+      document.getElementById('btnLimpar').click();
+      carregarRegistros(); carregarDash();
+    }catch(e){
+      console.error(e); msg.textContent = "Erro ao processar a foto.";
+    }
+  };
+
+  document.getElementById('btnLimpar').onclick = ()=>{
+    ['cliente','data','motorista','placa','qtde','assinatura'].forEach(id=>{
+      document.getElementById(id).value="";
+    });
+    document.getElementById('data').value = hojeISO;
+    document.getElementById('msg').textContent="";
+    
+    // Limpar seleção de arquivo
+    document.getElementById('btnRemove').click();
+  };
+
+  // ---------- Registros + Filtros ----------
+  function aplicarFiltros(rows){
+    const q = document.getElementById('busca').value.trim().toLowerCase();
+    const ini = document.getElementById('ini').value;
+    const fim = document.getElementById('fim').value;
+    const fCliente = document.getElementById('fCliente').value.trim().toLowerCase();
+
+    return rows.filter(r=>{
+      if(ini && r.data < ini) return false;
+      if(fim && r.data > fim) return false;
+      if(fCliente && !r.cliente?.toLowerCase().includes(fCliente)) return false;
+      if(q){
+        const blob = `${r.cliente} ${r.motorista} ${r.placa}`.toLowerCase();
+        if(!blob.includes(q)) return false;
+      }
+      return true;
+    }).sort((a,b)=>b.data.localeCompare(a.data) || b.id-a.id);
+  }
+
+  function carregarRegistros(){
+    const rows = aplicarFiltros(getDB());
+    const tb = document.querySelector('#tbl tbody'); tb.innerHTML="";
+    let tot=0;
+    rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${fmtData(r.data)}</td>
+        <td>${r.cliente||''}</td>
+        <td>${r.motorista||''}</td>
+        <td>${r.placa||''}</td>
+        <td>${r.qtde||0}</td>
+        <td>${r.foto_url ? `<img class="thumb" src="${r.foto_url}">` : ''}</td>`; // <-- MUDANÇA AQUI
+      
+      if (r.foto_url) {
+        const img = tr.querySelector('.thumb');
+        img.onclick = () => {
+          const win = window.open("", "_blank");
+          win.document.write(`<body style="margin:0; background:#222;"><img src="${r.foto_url}" style="max-width:100%; height:auto; display:block; margin:auto;"></body>`);
+          win.document.title = `Comprovante: ${r.cliente} - ${fmtData(r.data)}`;
+        };
+      }
+      
+      tb.appendChild(tr); tot += (r.qtde||0);
+    });
+    document.getElementById('totQtde').textContent = tot;
+  }
+  document.getElementById('btnFiltrar').onclick = carregarRegistros;
+
+  // ---------- Dashboard ----------
+  let chart;
+  function carregarDash(){
+    const di = document.getElementById('dIni').value;
+    const df = document.getElementById('dFim').value;
+    const grp = document.getElementById('agrup').value;
+    const fCli = document.getElementById('dCliente').value.trim().toLowerCase();
+
+    const base = getDB().filter(r=>{
+      if(di && r.data < di) return false;
+      if(df && r.data > df) return false;
+      if(fCli && !r.cliente?.toLowerCase().includes(fCli)) return false;
+      return true;
+    });
+
+    const map = new Map();
+    base.forEach(r=>{
+      const key = grp==='data' ? r.data : (r[grp]||'(vazio)');
+      map.set(key, (map.get(key)||0) + (r.qtde||0));
+    });
+
+    const labels = Array.from(map.keys()).sort((a,b)=> grp==='data' ? a.localeCompare(b) : a.localeCompare(b,'pt-BR',{numeric:true}));
+    const data = labels.map(k=>map.get(k));
+    const soma = data.reduce((a,b)=>a+b,0);
+
+    document.getElementById('kpiTotal').textContent = soma;
+    document.getElementById('kpiRegs').textContent = base.length;
+
+    // tabela
+    const tb = document.querySelector('#tblDash tbody'); tb.innerHTML="";
+    labels.forEach((l,i)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td>${grp==='data'?fmtData(l):l}</td><td>${data[i]}</td>`;
+      tb.appendChild(tr);
+    });
+
+    // gráfico
+    const ctx = document.getElementById('graf');
+    if(chart) chart.destroy();
+    chart = new Chart(ctx, {
+      plugins: [ChartDataLabels],
+      type:'line',
+      data:{ labels: labels.map(x=> grp==='data'?fmtDataGrafico(x):x), datasets:[{label:'Paletes', data, tension: 0.4, fill: false, borderColor: 'var(--pri)', backgroundColor: 'var(--pri)'}] },
+      options:{ responsive:true, plugins:{legend:{display:false}, datalabels: { anchor: 'end', align: 'top', formatter: (value) => value } }, scales:{y:{beginAtZero:true}} }
+    });
+  }
+
+  // inicial
+  carregarRegistros(); carregarDash();
+  document.getElementById('btnDash').onclick = carregarDash;
+
+});
+</script>
 </body>
 </html>
