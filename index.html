@@ -5,15 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Comprovante do Motorista</title>
 
-  <!-- Supabase SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Supabase SDK (UMD: evita quebrar o JS no GitHub Pages) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
-    // === AJUSTES DO SEU PROJETO (já preenchi com os seus) ===
+    // 1) CONFIGURAÇÃO DO SEU PROJETO SUPABASE
     const SUPABASE_URL = "https://humurozsimozypajncsv.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bXVyb3pzaW1venlwYWpuY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyODE3NzUsImV4cCI6MjA3MDg1Nzc3NX0.uAvgWY1HMvrSGNLaYjaFUQEh5wC8YlfNTRV5J79HVEQ";
-    const TENANT = "SUPERFRIO";
-    const BUCKET = "cm_fotos";
-    window.supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const TENANT = "SUPERFRIO";      // políticas RLS filtram por esse tenant
+    const BUCKET = "cm_fotos";       // bucket para as fotos (público)
+
+    if (!window.supabase) {
+      alert("Falha ao carregar o SDK do Supabase. Verifique a internet e recarregue a página.");
+    } else {
+      window.supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
   </script>
 
   <!-- Chart.js -->
@@ -51,10 +56,12 @@
     th{font-size:12px;color:#555}.muted{color:#666;font-size:12px}.tot{font-weight:700}
     .thumb{width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--bd); cursor: pointer;}
     @media (max-width: 768px) {.upload-container{flex-direction:column}.upload-btn{min-width:100%}.row{flex-direction:column}.row>*{flex:1 1 auto}}
-    /* ajustes leves do dashboard */
+    /* leves do dashboard */
     #tab-dash .card > .row:first-of-type { margin-bottom: 10px; }
     #tab-dash .card.color-1, #tab-dash .card.color-2 { padding: 12px; border-radius: 12px; }
     #kpiTotal, #kpiRegs { font-size: 24px !important; }
+    .card.color-1{background:linear-gradient(135deg, #42a5f5 0%, #1976d2 100%);border:none;color:#fff}
+    .card.color-2{background:linear-gradient(135deg, #a55eea 0%, #8b5cf6 100%);border:none;color:#fff}
   </style>
 </head>
 <body>
@@ -179,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function(){
   function getDB(){ return JSON.parse(localStorage.getItem(LSKEY)||'[]'); }
   function setDB(arr){ localStorage.setItem(LSKEY, JSON.stringify(arr)); }
 
-  // Converte e comprime imagem para BLOB (JPEG)
+  // Converte imagem para BLOB JPEG comprimido
   function fileToBlob(file, maxW=1200, quality=0.8){
     return new Promise((resolve,reject)=>{
       const reader=new FileReader();
@@ -198,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   }
 
-  // ---------- Upload + Supabase helpers ----------
+  // ---------- Supabase helpers ----------
   async function uploadPhoto(id, file){
     const blob = await fileToBlob(file, 1200, 0.8);
     const path = `${TENANT}/${id}.jpg`;
@@ -219,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function(){
     if(fim) query = query.lte('data', fim);
     if(fCliente) query = query.ilike('cliente', `%${fCliente}%`);
     if(q){
-      // busca em cliente OR motorista OR placa
+      // OR em cliente/motorista/placa
       query = query.or(`cliente.ilike.%${q}%,motorista.ilike.%${q}%,placa.ilike.%${q}%`);
     }
     const { data, error } = await query;
@@ -233,7 +240,6 @@ document.addEventListener('DOMContentLoaded', function(){
   document.getElementById('foto').onchange = async (e) => {
     const file = e.target.files[0]; if(!file) return;
     selectedFile = file;
-    // preview
     const reader = new FileReader();
     reader.onload = () => {
       document.getElementById('previewImg').src = reader.result;
@@ -325,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function(){
       rows = await fetchRegs(filtros);
     }catch(e){
       console.warn('Falha ao buscar no Supabase, caindo para local:', e?.message||e);
-      // filtra localmente se offline
+      // local
       rows = getDB().filter(r=>{
         if(filtros.ini && r.data < filtros.ini) return false;
         if(filtros.fim && r.data > filtros.fim) return false;
