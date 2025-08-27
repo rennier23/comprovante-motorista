@@ -5,12 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Comprovante do Motorista</title>
 
-  <!-- Supabase SDK (UMD) + defer para evitar corrida de carregamento -->
+  <!-- Supabase SDK (UMD) -->
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-
-  <!-- Chart.js apenas (sem plugin de datalabels p/ evitar quebra) -->
+  <!-- Chart.js -->
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -140,27 +138,20 @@
 </main>
 
 <script>
-(function(){  // isola o escopo
-  // ====== DIAGNÓSTICO: captura qualquer erro e mostra na tela ======
-  window.addEventListener('error', (e) => {
-    alert('Erro de script: ' + (e?.message || e));
-  });
+(function(){
+  // Mostra qualquer erro JS (facilita debug em janela anônima)
+  window.addEventListener('error', (e) => alert('Erro de script: ' + (e?.message || e)));
 
   document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      // --------- CONFIG ---------
+    try{
       const SUPABASE_URL = "https://humurozsimozypajncsv.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bXVyb3pzaW1venlwYWpuY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyODE3NzUsImV4cCI6MjA3MDg1Nzc3NX0.uAvgWY1HMvrSGNLaYjaFUQEh5wC8YlfNTRV5J79HVEQ";
       const TENANT = "SUPERFRIO";
-      const BUCKET = "cm_fotos";
 
-      // garantia: SDK carregado?
-      if (!window.supabase) {
-        throw new Error("SDK do Supabase não carregou (verifique a internet ou bloqueadores).");
-      }
+      if(!window.supabase) throw new Error("SDK do Supabase não carregou.");
       const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      // --------- Navegação ---------
+      // Tabs
       document.querySelectorAll('nav button').forEach(b=>{
         b.onclick=()=>{
           document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
@@ -170,17 +161,17 @@
         };
       });
 
-      // --------- Utils ---------
-      const LSKEY = 'comprovantes_local';
-      const hojeISO = new Date().toISOString().slice(0,10);
+      // Utils
+      const LSKEY='comprovantes_local';
+      const hojeISO=new Date().toISOString().slice(0,10);
       ['data','ini','fim','dIni','dFim'].forEach(id=>document.getElementById(id).value=hojeISO);
       const fmtData = s => s ? new Date(s).toLocaleDateString('pt-BR') : "";
       const fmtDataGrafico = s => s ? new Date(s).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}) : "";
+      const getDB = ()=> JSON.parse(localStorage.getItem(LSKEY)||'[]');
+      const setDB = (arr)=> localStorage.setItem(LSKEY, JSON.stringify(arr));
 
-      const getDB = () => JSON.parse(localStorage.getItem(LSKEY)||'[]');
-      const setDB = (arr) => localStorage.setItem(LSKEY, JSON.stringify(arr));
-
-      const fileToBlob = (file, maxW=1200, quality=0.8)=> new Promise((resolve,reject)=>{
+      // Comprime para base64
+      const fileToDataURL = (file, maxW=1200, quality=0.8)=> new Promise((resolve,reject)=>{
         const reader=new FileReader();
         reader.onload=()=>{
           const img=new Image();
@@ -189,172 +180,146 @@
             const w = Math.round(img.width*ratio), h = Math.round(img.height*ratio);
             const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
             const ctx=cv.getContext('2d'); ctx.drawImage(img,0,0,w,h);
-            cv.toBlob(b=> b? resolve(b) : reject('toBlob falhou'), 'image/jpeg', quality);
+            resolve(cv.toDataURL('image/jpeg', quality));
           };
           img.onerror=reject; img.src=reader.result;
         };
         reader.onerror=reject; reader.readAsDataURL(file);
       });
 
-      // --------- Supabase helpers ---------
-      async function uploadPhoto(id, file){
-        const blob = await fileToBlob(file, 1200, 0.8);
-        const path = `${TENANT}/${id}.jpg`;
-        const up = await supa.storage.from(BUCKET).upload(path, blob, { contentType:'image/jpeg', upsert: true });
-        if(up.error) throw up.error;
-        const { data } = supa.storage.from(BUCKET).getPublicUrl(path);
-        return data.publicUrl;
-      }
-      async function insertRow(rec){
-        const { error } = await supa.from('cm_regs').insert(rec);
-        if(error) throw error;
-      }
-      async function fetchRegs({ini,fim,q,fCliente}){
-        let query = supa.from('cm_regs').select('*').order('data',{ascending:false});
-        if(ini) query = query.gte('data', ini);
-        if(fim) query = query.lte('data', fim);
-        if(fCliente) query = query.ilike('cliente', `%${fCliente}%`);
-        if(q) query = query.or(`cliente.ilike.%${q}%,motorista.ilike.%${q}%,placa.ilike.%${q}%`);
-        const { data, error } = await query;
-        if(error) throw error;
-        return data || [];
+      // Conexão de fumaça: testa se a tabela está acessível
+      try{
+        await supa.from('cm_regs').select('id').limit(1);
+      }catch(pingErr){
+        alert('Conexão/RLS com Supabase falhou: ' + (pingErr?.message||pingErr));
       }
 
-      // --------- Upload UI ---------
-      let selectedFile = null;
-      btnCamera.onclick = () => foto.click();
-      foto.onchange = (e) => {
-        const file = e.target.files?.[0];
-        if(!file) return;
-        selectedFile = file;
-        const reader = new FileReader();
-        reader.onload = () => {
-          previewImg.src = reader.result;
-          imagePreview.style.display = 'block';
-          btnCamera.classList.add('success');
-          btnCamera.innerHTML = '<i class="fas fa-check"></i> Foto Capturada';
-        };
-        reader.readAsDataURL(file);
+      // Upload UI
+      let selectedFile=null;
+      btnCamera.onclick=()=>foto.click();
+      foto.onchange=(e)=>{
+        const f=e.target.files?.[0]; if(!f) return;
+        selectedFile=f;
+        const r=new FileReader();
+        r.onload=()=>{ previewImg.src=r.result; imagePreview.style.display='block';
+          btnCamera.classList.add('success'); btnCamera.innerHTML='<i class="fas fa-check"></i> Foto Capturada'; };
+        r.readAsDataURL(f);
       };
-      btnRemove.onclick = () => {
-        selectedFile = null; foto.value = '';
-        imagePreview.style.display = 'none';
-        btnCamera.classList.remove('success');
-        btnCamera.innerHTML = '<i class="fas fa-camera"></i> Tirar Foto';
-      };
+      btnRemove.onclick=()=>{ selectedFile=null; foto.value=''; imagePreview.style.display='none';
+        btnCamera.classList.remove('success'); btnCamera.innerHTML='<i class="fas fa-camera"></i> Tirar Foto'; };
 
-      // --------- Salvar ---------
+      // Salvar
       btnSalvar.onclick = async ()=>{
         try{
-          msg.textContent = "Processando…";
-          const cliente = document.getElementById('cliente').value.trim();
-          const data = document.getElementById('data').value;
-          const motorista = document.getElementById('motorista').value.trim();
-          const placa = document.getElementById('placa').value.trim().toUpperCase();
-          const qtde = parseInt(document.getElementById('qtde').value||"0",10);
-          const assinatura = document.getElementById('assinatura').value.trim();
+          msg.textContent="Processando…";
+          const cliente=clienteEl.value=cliente.value?.trim(); // (só p/ evitar linter)
+        }catch{}
+        const cliente = document.getElementById('cliente').value.trim();
+        const data = document.getElementById('data').value;
+        const motorista = document.getElementById('motorista').value.trim();
+        const placa = document.getElementById('placa').value.trim().toUpperCase();
+        const qtde = parseInt(document.getElementById('qtde').value||"0",10);
+        const assinatura = document.getElementById('assinatura').value.trim();
 
-          if(!cliente || !data || !motorista || !placa || !qtde || !selectedFile){
-            msg.textContent = "Preencha todos os campos e selecione uma foto.";
-            return;
-          }
+        if(!cliente || !data || !motorista || !placa || !qtde || !selectedFile){
+          msg.textContent="Preencha todos os campos e selecione uma foto."; return;
+        }
 
-          const id = Date.now();
-          try{
-            const foto_url = await uploadPhoto(id, selectedFile);
-            await insertRow({ id, data, cliente, motorista, placa, qtde, assinatura, foto_url, tenant: TENANT });
-            msg.textContent = "Registro salvo (Supabase).";
-          }catch(errSupabase){
-            // fallback local
-            console.warn('Supabase falhou, salvando local:', errSupabase);
-            const reader = new FileReader();
-            reader.onload = ()=>{
-              const foto_url = reader.result;
-              const db = getDB(); db.push({ id, data, cliente, motorista, placa, qtde, assinatura, foto_url });
-              setDB(db);
-              msg.textContent = "Registro salvo localmente (offline).";
-              carregarRegistros(); carregarDash();
-            };
-            reader.readAsDataURL(selectedFile);
-            return;
-          }
-
+        const id = Date.now();
+        try{
+          const foto_b64 = await fileToDataURL(selectedFile, 1200, 0.8);
+          const rec = { id, data, cliente, motorista, placa, qtde, assinatura, foto_url: foto_b64, tenant: TENANT };
+          const { error } = await supa.from('cm_regs').insert(rec);
+          if(error) throw error;
+          msg.textContent = "Registro salvo (Supabase).";
           btnLimpar.click();
           await carregarRegistros(); await carregarDash();
-        }catch(e){ alert('Erro ao salvar: '+(e?.message||e)); }
+        }catch(err){
+          alert('Falha ao salvar no Supabase: ' + (err?.message||err) + '\nVou salvar localmente.');
+          // fallback local
+          const reader=new FileReader();
+          reader.onload=()=>{
+            const foto_url=reader.result;
+            const db=getDB(); db.push({ id, data, cliente, motorista, placa, qtde, assinatura, foto_url });
+            setDB(db);
+            msg.textContent="Registro salvo localmente (offline).";
+            carregarRegistros(); carregarDash();
+          };
+          reader.readAsDataURL(selectedFile);
+        }
       };
 
-      btnLimpar.onclick = ()=>{
-        ['cliente','data','motorista','placa','qtde','assinatura'].forEach(id=>{
-          document.getElementById(id).value="";
-        });
-        data.value = hojeISO; msg.textContent="";
-        btnRemove.click();
+      btnLimpar.onclick=()=>{
+        ['cliente','data','motorista','placa','qtde','assinatura'].forEach(id=>document.getElementById(id).value="");
+        document.getElementById('data').value=hojeISO; msg.textContent=""; btnRemove.click();
       };
 
-      // --------- Registros ---------
+      // Registros
       async function carregarRegistros(){
-        const tb = document.querySelector('#tbl tbody');
-        tb.innerHTML = '<tr><td colspan="6">Carregando…</td></tr>';
-
-        const filtros = {
-          q: busca.value.trim().toLowerCase(),
-          ini: ini.value,
-          fim: fim.value,
-          fCliente: fCliente.value.trim().toLowerCase()
-        };
-
+        const tb=document.querySelector('#tbl tbody'); tb.innerHTML='<tr><td colspan="6">Carregando…</td></tr>';
+        const filtros={ q:busca.value.trim().toLowerCase(), ini:ini.value, fim:fim.value, fCliente:fCliente.value.trim().toLowerCase() };
         let rows=[];
-        try{ rows = await fetchRegs(filtros); }
-        catch(e){
+        try{
+          let q=supa.from('cm_regs').select('*').order('data',{ascending:false});
+          if(filtros.ini) q=q.gte('data',filtros.ini);
+          if(filtros.fim) q=q.lte('data',filtros.fim);
+          if(filtros.fCliente) q=q.ilike('cliente',`%${filtros.fCliente}%`);
+          if(filtros.q) q=q.or(`cliente.ilike.%${filtros.q}%,motorista.ilike.%${filtros.q}%,placa.ilike.%${filtros.q}%`);
+          const { data, error } = await q;
+          if(error) throw error;
+          rows=data||[];
+        }catch(e){
           console.warn('Busca remota falhou, usando local:', e);
-          rows = getDB().filter(r=>{
+          rows=getDB().filter(r=>{
             if(filtros.ini && r.data < filtros.ini) return false;
             if(filtros.fim && r.data > filtros.fim) return false;
             if(filtros.fCliente && !r.cliente?.toLowerCase().includes(filtros.fCliente)) return false;
             if(filtros.q){
-              const blob = `${r.cliente} ${r.motorista} ${r.placa}`.toLowerCase();
+              const blob=`${r.cliente} ${r.motorista} ${r.placa}`.toLowerCase();
               if(!blob.includes(filtros.q)) return false;
             }
             return true;
-          }).sort((a,b)=>b.data.localeCompare(a.data) || b.id-a.id);
+          }).sort((a,b)=>b.data.localeCompare(a.data)||b.id-a.id);
         }
 
         tb.innerHTML=''; let tot=0;
         rows.forEach(r=>{
           const tr=document.createElement('tr');
-          tr.innerHTML = `
+          tr.innerHTML=`
             <td>${fmtData(r.data)}</td>
             <td>${r.cliente||''}</td>
             <td>${r.motorista||''}</td>
             <td>${r.placa||''}</td>
             <td>${r.qtde||0}</td>
-            <td>${r.foto_url ? `<img class="thumb" src="${r.foto_url}">` : ''}</td>`;
+            <td>${r.foto_url?`<img class="thumb" src="${r.foto_url}">`:''}</td>`;
           if(r.foto_url){
             tr.querySelector('.thumb').onclick=()=>{
-              const win = window.open("", "_blank");
+              const win=window.open("","_blank");
               win.document.write(`<body style="margin:0;background:#222;"><img src="${r.foto_url}" style="max-width:100%;height:auto;display:block;margin:auto;"></body>`);
-              win.document.title = `Comprovante: ${r.cliente||''} - ${fmtData(r.data)}`;
+              win.document.title=`Comprovante: ${r.cliente||''} - ${fmtData(r.data)}`;
             };
           }
           tb.appendChild(tr); tot += (r.qtde||0);
         });
-        totQtde.textContent = tot;
+        totQtde.textContent=tot;
       }
-      btnFiltrar.onclick = carregarRegistros;
+      btnFiltrar.onclick=carregarRegistros;
 
-      // --------- Dashboard ---------
+      // Dashboard
       let chart;
       async function carregarDash(){
         let base=[];
         try{
-          base = await fetchRegs({
-            ini: dIni.value, fim: dFim.value, q:'', fCliente: dCliente.value.trim().toLowerCase()
-          });
+          let q=supa.from('cm_regs').select('*');
+          if(dIni.value) q=q.gte('data', dIni.value);
+          if(dFim.value) q=q.lte('data', dFim.value);
+          if(dCliente.value.trim()) q=q.ilike('cliente', `%${dCliente.value.trim().toLowerCase()}%`);
+          const { data, error } = await q;
+          if(error) throw error;
+          base=data||[];
         }catch(e){
-          // offline: local
           const di=dIni.value, df=dFim.value, fCli=dCliente.value.trim().toLowerCase();
-          base = getDB().filter(r=>{
+          base=getDB().filter(r=>{
             if(di && r.data < di) return false;
             if(df && r.data > df) return false;
             if(fCli && !r.cliente?.toLowerCase().includes(fCli)) return false;
@@ -362,42 +327,39 @@
           });
         }
 
-        const grp = agrup.value;
-        const map = new Map();
+        const grp=agrup.value;
+        const map=new Map();
         base.forEach(r=>{
-          const key = grp==='data' ? r.data : (r[grp]||'(vazio)');
-          map.set(key, (map.get(key)||0) + (r.qtde||0));
+          const key=grp==='data'? r.data : (r[grp]||'(vazio)');
+          map.set(key,(map.get(key)||0)+(r.qtde||0));
         });
 
-        const labels = Array.from(map.keys()).sort((a,b)=> grp==='data' ? a.localeCompare(b) : a.localeCompare(b,'pt-BR',{numeric:true}));
-        const dataArr = labels.map(k=>map.get(k));
-        const soma = dataArr.reduce((a,b)=>a+b,0);
-        kpiTotal.textContent = soma;
-        kpiRegs.textContent = base.length;
+        const labels=Array.from(map.keys()).sort((a,b)=> grp==='data'? a.localeCompare(b): a.localeCompare(b,'pt-BR',{numeric:true}));
+        const dataArr=labels.map(k=>map.get(k));
+        const soma=dataArr.reduce((a,b)=>a+b,0);
+        kpiTotal.textContent=soma; kpiRegs.textContent=base.length;
 
         const tb=document.querySelector('#tblDash tbody'); tb.innerHTML='';
         labels.forEach((l,i)=>{
           const tr=document.createElement('tr');
-          tr.innerHTML = `<td>${grp==='data'?fmtData(l):l}</td><td>${dataArr[i]}</td>`;
-          tb.appendChild(tr);
+          tr.innerHTML=`<td>${grp==='data'?fmtData(l):l}</td><td>${dataArr[i]}</td>`; tb.appendChild(tr);
         });
 
-        const ctx=graf.getContext('2d');
         if(chart) chart.destroy();
-        chart = new Chart(ctx,{
+        chart=new Chart(graf.getContext('2d'),{
           type:'line',
-          data:{ labels: labels.map(x=> grp==='data'?fmtDataGrafico(x):x),
-                 datasets:[{label:'Paletes', data: dataArr, tension:.35}] },
-          options:{ responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+          data:{labels:labels.map(x=> grp==='data'?fmtDataGrafico(x):x),
+                datasets:[{label:'Paletes',data:dataArr,tension:.35}]},
+          options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
         });
       }
-      btnDash.onclick = carregarDash;
+      btnDash.onclick=carregarDash;
 
-      // --------- inicial ---------
+      // Inicial
       await carregarRegistros(); await carregarDash();
 
-    } catch (e) {
-      alert('Falha na inicialização: ' + (e?.message || e));
+    }catch(e){
+      alert('Falha na inicialização: ' + (e?.message||e));
     }
   });
 })();
