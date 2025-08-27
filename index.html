@@ -5,19 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Comprovante do Motorista</title>
 
-  <!-- Supabase SDK (SEM defer, precisa carregar antes do nosso script) -->
+  <!-- Supabase SDK (carregar antes do nosso script) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
-  <!-- Chart.js (pode usar defer) -->
+  <!-- Chart.js + datalabels (defer pode) -->
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
-  <!-- Font Awesome -->
+  <!-- Font Awesome para ícones -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
-    :root{--pri:#0b6efd;--bg:#f6f7fb;--card:#fff;--bd:#e6e8ef;--success:#10b981;--warning:#f59e0b}
-    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,Arial;background:var(--bg)}
+    :root{--pri:#0b6efd;--bg:#f6f7fb;--card:#fff;--bd:#e6e8ef;--success:#10b981}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Arial;background:var(--bg)}
     header{padding:14px 16px;background:#fff;border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center}
     header h1{font-size:18px;margin:0 8px 0 0}
     nav button{border:1px solid var(--bd);background:#fff;padding:8px 12px;border-radius:10px;cursor:pointer}
@@ -27,32 +28,36 @@
     .row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1 1 220px}
     label{font-size:12px;font-weight:600;display:block;margin:10px 0 6px}
     input,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:10px;background:#fff}
-    .btn{padding:10px 14px;border-radius:10px;border:1px solid var(--pri);background:var(--pri);color:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-size:14px;transition:all 0.2s ease}
-    .btn.compact{padding:8px 12px;font-size:13px}
-    .btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(11,110,253,0.3)}
+    .btn{padding:10px 14px;border-radius:10px;border:1px solid var(--pri);background:var(--pri);color:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-size:14px;transition:.2s}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(11,110,253,.3)}
     .btn.secondary{background:#fff;color:#111;border-color:var(--bd)}
-    .btn.secondary:hover{background:#f8f9fa;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+    .btn.secondary:hover{background:#f8f9fa}
+    .btn.compact{padding:8px 12px;font-size:13px}
+    .muted{color:#666;font-size:12px}
 
+    /* Upload */
     .upload-container{display:flex;gap:10px;flex-wrap:wrap}
-    .upload-btn{flex:1;min-width:140px;justify-content:center;position:relative;overflow:hidden}
     .upload-btn.success{background:var(--success);border-color:var(--success)}
     .image-preview{margin-top:10px;display:none}
     .image-preview img{max-width:200px;max-height:150px;border-radius:8px;border:1px solid var(--bd)}
     .image-preview .remove-btn{margin-left:10px;background:#ef4444;border-color:#ef4444;padding:6px 10px;font-size:12px}
 
+    /* Cards KPI */
     .card.color-1{background:linear-gradient(135deg,#42a5f5 0%,#1976d2 100%);border:none;color:#fff}
     .card.color-2{background:linear-gradient(135deg,#a55eea 0%,#8b5cf6 100%);border:none;color:#fff}
     .card.color-1 .muted,.card.color-2 .muted{color:#fff;opacity:.9}
 
-    table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--bd);padding:8px 6px;text-align:left;font-size:14px}
-    th{font-size:12px;color:#555}.muted{color:#666;font-size:12px}.tot{font-weight:700}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid var(--bd);padding:8px 6px;text-align:left;font-size:14px}
+    th{font-size:12px;color:#555}
+    .tot{font-weight:700}
     .thumb{width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--bd);cursor:pointer}
 
-    @media (max-width: 768px) {.upload-container{flex-direction:column}.row{flex-direction:column}}
-    /* Ajustes finos do dashboard */
-    #tab-dash .card > .row:first-of-type { margin-bottom: 10px; }
-    #tab-dash .card.color-1, #tab-dash .card.color-2 { padding: 12px; border-radius: 12px; }
-    #kpiTotal, #kpiRegs { font-size: 24px !important; }
+    /* Mobile */
+    @media (max-width: 768px){.row{flex-direction:column}}
+    #tab-dash .card>.row:first-of-type{margin-bottom:10px}
+    #tab-dash .card.color-1,#tab-dash .card.color-2{padding:12px;border-radius:12px}
+    #kpiTotal,#kpiRegs{font-size:24px!important}
   </style>
 </head>
 <body>
@@ -116,9 +121,7 @@
         <div><label><i class="fas fa-calendar-day"></i> Data inicial</label><input id="ini" type="date"></div>
         <div><label><i class="fas fa-calendar-day"></i> Data final</label><input id="fim" type="date"></div>
         <div><label><i class="fas fa-building"></i> Cliente</label><input id="fCliente" placeholder="(opcional)"></div>
-        <div style="align-self:end">
-          <button class="btn" id="btnFiltrar"><i class="fas fa-filter"></i> Aplicar filtros</button>
-        </div>
+        <div style="align-self:end"><button class="btn" id="btnFiltrar"><i class="fas fa-filter"></i> Aplicar filtros</button></div>
       </div>
       <table id="tbl">
         <thead><tr><th>Data</th><th>Cliente</th><th>Motorista</th><th>Placa</th><th>QTDE</th><th>Foto</th></tr></thead>
@@ -162,19 +165,18 @@
 
 <script>
 (function(){
-  // ---- CONFIG ----
-  const SUPABASE_URL  = "https://humurozsimozypajncsv.supabase.co";
-  const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bXVyb3pzaW1venlwYWpuY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyODE3NzUsImV4cCI6MjA3MDg1Nzc3NX0.uAvgWY1HMvrSGNLaYjaFUQEh5wC8YlfNTRV5J79HVEQ";
+  // --------- CONFIG ---------
+  const SUPABASE_URL  = "https://iazdknwffvdjxncsvvls.supabase.co";
+  const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlhemRrbndmZnZkanhuY3N2dmxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4ODYyNDksImV4cCI6MjA3MTQ2MjI0OX0.lBjj_IywnMKauk4rvCE3Tdb2S6X3sLJd-A44XgJSPYw";
   const TENANT        = "SUPERFRIO";
 
-  // Garante que o SDK carregou
-  if (!window.supabase) {
-    alert("SDK do Supabase não carregou. Verifique a internet e bloqueadores.");
+  if(!window.supabase){
+    alert("SDK do Supabase não carregou. Verifique conexão/adblock.");
     return;
   }
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-  // ---- Navegação ----
+  // Navegação abas
   document.querySelectorAll('nav button').forEach(b=>{
     b.onclick=()=>{
       document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
@@ -184,141 +186,136 @@
     };
   });
 
-  // ---- Utils ----
+  // --------- Utils ---------
   const LSKEY='comprovantes_local';
-  const hojeISO = new Date().toISOString().slice(0,10);
+  const hojeISO=new Date().toISOString().slice(0,10);
   ['data','ini','fim','dIni','dFim'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=hojeISO; });
+  const getDB=()=>JSON.parse(localStorage.getItem(LSKEY)||'[]');
+  const setDB=(arr)=>localStorage.setItem(LSKEY,JSON.stringify(arr));
 
-  const getDB = ()=> JSON.parse(localStorage.getItem(LSKEY) || '[]');
-  const setDB = (arr)=> localStorage.setItem(LSKEY, JSON.stringify(arr));
-
-  // Comprime para base64
-  function fileToDataURL(file, maxW=1200, quality=0.8){
+  // Comprime a foto em base64 (JPEG) para caber na tabela
+  function fileToDataURL(file, maxW=1200, quality=.8){
     return new Promise((resolve,reject)=>{
-      const reader=new FileReader();
-      reader.onload=()=>{
+      const r=new FileReader();
+      r.onload=()=>{
         const img=new Image();
         img.onload=()=>{
           const ratio=Math.min(1,maxW/img.width);
           const w=Math.round(img.width*ratio), h=Math.round(img.height*ratio);
           const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
-          const ctx=cv.getContext('2d'); ctx.drawImage(img,0,0,w,h);
+          cv.getContext('2d').drawImage(img,0,0,w,h);
           resolve(cv.toDataURL('image/jpeg',quality));
         };
-        img.onerror=reject; img.src=reader.result;
+        img.onerror=reject; img.src=r.result;
       };
-      reader.onerror=reject; reader.readAsDataURL(file);
+      r.onerror=reject; r.readAsDataURL(file);
     });
   }
 
-  // ---- Supabase helpers ----
+  // --------- Supabase helpers ---------
   async function insertRow(rec){
     const { error } = await supa.from('cm_regs').insert(rec);
-    if (error) throw error;
+    if(error) throw error;
   }
   async function fetchRegs({ini,fim,q,fCliente}){
     try{
-      let query = supa.from('cm_regs').select('*').order('data',{ascending:false});
-      if (ini) query = query.gte('data', ini);
-      if (fim) query = query.lte('data', fim);
-      if (fCliente) query = query.ilike('cliente', `%${fCliente}%`);
-      if (q) query = query.or(`cliente.ilike.%${q}%,motorista.ilike.%${q}%,placa.ilike.%${q}%`);
+      let query=supa.from('cm_regs').select('*').order('data',{ascending:false});
+      if(ini) query=query.gte('data',ini);
+      if(fim) query=query.lte('data',fim);
+      if(fCliente) query=query.ilike('cliente',`%${fCliente}%`);
+      if(q) query=query.or(`cliente.ilike.%${q}%,motorista.ilike.%${q}%,placa.ilike.%${q}%`);
       const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
+      if(error) throw error;
+      return data||[];
     }catch(e){
-      // fallback: local
-      return aplicarFiltrosLocal(getDB(), {ini,fim,q,fCliente});
+      // fallback offline
+      return aplicarFiltrosLocal(getDB(),{ini,fim,q,fCliente});
     }
   }
-  // Smoke-test da tabela / RLS (só avisa se der erro)
+
+  // Smoke-test silencioso (apenas no console)
   supa.from('cm_regs').select('id').limit(1).then(({error})=>{
-    if (error) alert("Conexão/RLS com Supabase falhou: " + (error.message||error));
+    if(error) console.warn("Supabase ping falhou:", error.message||error);
   });
 
-  // ---- Upload UI ----
+  // --------- Upload UI ---------
   let selectedFile=null;
-  const btnCamera = document.getElementById('btnCamera');
-  const inputFoto = document.getElementById('foto');
-  const previewBox = document.getElementById('imagePreview');
-  const previewImg = document.getElementById('previewImg');
-  const btnRemove  = document.getElementById('btnRemove');
+  const btnCamera=document.getElementById('btnCamera');
+  const inputFoto=document.getElementById('foto');
+  const previewBox=document.getElementById('imagePreview');
+  const previewImg=document.getElementById('previewImg');
+  const btnRemove=document.getElementById('btnRemove');
 
-  btnCamera.onclick = ()=> inputFoto.click();
-  inputFoto.onchange = (e)=>{
-    const f = e.target.files?.[0]; if (!f) return;
-    selectedFile = f;
-    const r = new FileReader();
-    r.onload = ()=>{ previewImg.src=r.result; previewBox.style.display='block'; btnCamera.classList.add('success'); btnCamera.innerHTML='<i class="fas fa-check"></i> Foto Capturada'; };
+  btnCamera.onclick=()=>inputFoto.click();
+  inputFoto.onchange=(e)=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    selectedFile=f;
+    const r=new FileReader();
+    r.onload=()=>{ previewImg.src=r.result; previewBox.style.display='block'; btnCamera.classList.add('success'); btnCamera.innerHTML='<i class="fas fa-check"></i> Foto Capturada'; };
     r.readAsDataURL(f);
   };
-  btnRemove.onclick = ()=>{
-    selectedFile=null; inputFoto.value=''; previewBox.style.display='none';
-    btnCamera.classList.remove('success'); btnCamera.innerHTML='<i class="fas fa-camera"></i> Tirar Foto';
-  };
+  btnRemove.onclick=()=>{ selectedFile=null; inputFoto.value=''; previewBox.style.display='none'; btnCamera.classList.remove('success'); btnCamera.innerHTML='<i class="fas fa-camera"></i> Tirar Foto'; };
 
-  // ---- Salvar ----
-  const msgEl = document.getElementById('msg');
-  document.getElementById('btnSalvar').onclick = async ()=>{
-    msgEl.textContent = "Processando…";
-
+  // --------- Salvar ---------
+  const msgEl=document.getElementById('msg');
+  document.getElementById('btnSalvar').onclick=async()=>{
+    msgEl.textContent="Processando…";
     try{
-      const clienteEl = document.getElementById('cliente');
-      const cliente = clienteEl.value?.trim() || '';
-      const data = document.getElementById('data').value;
-      const motorista = document.getElementById('motorista').value.trim();
-      const placa = document.getElementById('placa').value.trim().toUpperCase();
-      const qtde = parseInt(document.getElementById('qtde').value||"0",10);
-      const assinatura = document.getElementById('assinatura').value.trim();
+      const cliente=(document.getElementById('cliente').value||'').trim();
+      const data=document.getElementById('data').value;
+      const motorista=document.getElementById('motorista').value.trim();
+      const placa=document.getElementById('placa').value.trim().toUpperCase();
+      const qtde=parseInt(document.getElementById('qtde').value||"0",10);
+      const assinatura=document.getElementById('assinatura').value.trim();
 
-      if(!cliente || !data || !motorista || !placa || !qtde || !selectedFile){
-        msgEl.textContent = "Preencha todos os campos e selecione uma foto.";
+      if(!cliente||!data||!motorista||!placa||!qtde||!selectedFile){
+        msgEl.textContent="Preencha todos os campos e selecione uma foto.";
         return;
       }
 
-      const id = Date.now();
+      const id=Date.now();
       try{
-        const foto_url = await fileToDataURL(selectedFile, 1200, 0.8); // base64
-        await insertRow({ id, data, cliente, motorista, placa, qtde, assinatura, foto_url, tenant: TENANT });
-        msgEl.textContent = "Registro salvo (Supabase).";
+        const foto_url=await fileToDataURL(selectedFile,1200,.8);
+        await insertRow({ id, data, cliente, motorista, placa, qtde, assinatura, foto_url, tenant:TENANT });
+        msgEl.textContent="Registro salvo (Supabase).";
       }catch(errSupabase){
-        // fallback local
         console.warn('Falha Supabase, salvando local:', errSupabase?.message||errSupabase);
-        const reader = new FileReader();
-        reader.onload = ()=>{
-          const foto_url = reader.result;
-          const db = getDB(); db.push({ id, data, cliente, motorista, placa, qtde, assinatura, foto_url });
+        // salva local
+        const r=new FileReader();
+        r.onload=()=>{
+          const foto_url=r.result;
+          const db=getDB(); db.push({ id, data, cliente, motorista, placa, qtde, assinatura, foto_url });
           setDB(db);
-          msgEl.textContent = "Registro salvo localmente (offline).";
+          msgEl.textContent="Registro salvo localmente (offline).";
           carregarRegistros(); carregarDash();
         };
-        reader.readAsDataURL(selectedFile);
-        return; // já atualizamos via local
+        r.readAsDataURL(selectedFile);
+        return;
       }
 
       // limpar e atualizar
       document.getElementById('btnLimpar').click();
       carregarRegistros(); carregarDash();
     }catch(e){
-      msgEl.textContent = "Erro: " + (e.message||e);
+      msgEl.textContent="Erro: "+(e.message||e);
     }
   };
 
-  document.getElementById('btnLimpar').onclick = ()=>{
-    ['cliente','data','motorista','placa','qtde','assinatura'].forEach(id=>{ const el=document.getElementById(id); if (el) el.value=''; });
-    document.getElementById('data').value = hojeISO;
-    msgEl.textContent = ""; btnRemove.click();
+  document.getElementById('btnLimpar').onclick=()=>{
+    ['cliente','data','motorista','placa','qtde','assinatura'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    document.getElementById('data').value=hojeISO;
+    msgEl.textContent=""; btnRemove.click();
   };
 
-  // ---- Registros + Filtros ----
-  function aplicarFiltrosLocal(rows, {ini,fim,q,fCliente}){
-    const ql = (q||'').toLowerCase(), fc=(fCliente||'').toLowerCase();
+  // --------- Registros + Filtros ---------
+  function aplicarFiltrosLocal(rows,{ini,fim,q,fCliente}){
+    const ql=(q||'').toLowerCase(), fc=(fCliente||'').toLowerCase();
     return rows.filter(r=>{
-      if(ini && r.data < ini) return false;
-      if(fim && r.data > fim) return false;
+      if(ini && r.data<ini) return false;
+      if(fim && r.data>fim) return false;
       if(fc && !r.cliente?.toLowerCase().includes(fc)) return false;
       if(ql){
-        const blob = `${r.cliente} ${r.motorista} ${r.placa}`.toLowerCase();
+        const blob=`${r.cliente} ${r.motorista} ${r.placa}`.toLowerCase();
         if(!blob.includes(ql)) return false;
       }
       return true;
@@ -326,92 +323,90 @@
   }
 
   async function carregarRegistros(){
-    const q = document.getElementById('busca').value.trim();
-    const ini = document.getElementById('ini').value;
-    const fim = document.getElementById('fim').value;
-    const fCliente = document.getElementById('fCliente').value.trim();
+    const q=document.getElementById('busca').value.trim();
+    const ini=document.getElementById('ini').value;
+    const fim=document.getElementById('fim').value;
+    const fCliente=document.getElementById('fCliente').value.trim();
 
-    const rows = await fetchRegs({ini,fim,q,fCliente});
-    const tb = document.querySelector('#tbl tbody'); tb.innerHTML = '';
-    let tot = 0;
+    const rows=await fetchRegs({ini,fim,q,fCliente});
+    const tb=document.querySelector('#tbl tbody'); tb.innerHTML='';
+    let tot=0;
     rows.forEach(r=>{
       const tr=document.createElement('tr');
-      tr.innerHTML = `
-        <td>${r.data ? new Date(r.data).toLocaleDateString('pt-BR') : ''}</td>
+      tr.innerHTML=`
+        <td>${r.data? new Date(r.data).toLocaleDateString('pt-BR'):''}</td>
         <td>${r.cliente||''}</td>
         <td>${r.motorista||''}</td>
         <td>${r.placa||''}</td>
         <td>${r.qtde||0}</td>
-        <td>${r.foto_url ? `<img class="thumb" src="${r.foto_url}">` : ''}</td>`;
+        <td>${r.foto_url? `<img class="thumb" src="${r.foto_url}">`:''}</td>`;
       if(r.foto_url){
-        tr.querySelector('.thumb').onclick = ()=>{
+        tr.querySelector('.thumb').onclick=()=>{
           const win=window.open('','_blank');
           win.document.write(`<body style="margin:0;background:#222"><img src="${r.foto_url}" style="max-width:100%;height:auto;display:block;margin:auto"></body>`);
           win.document.title=`Comprovante: ${r.cliente||''} - ${r.data||''}`;
         };
       }
       tb.appendChild(tr);
-      tot += (r.qtde||0);
+      tot+=(r.qtde||0);
     });
-    document.getElementById('totQtde').textContent = tot;
+    document.getElementById('totQtde').textContent=tot;
   }
-  document.getElementById('btnFiltrar').onclick = carregarRegistros;
+  document.getElementById('btnFiltrar').onclick=carregarRegistros;
 
-  // ---- Dashboard ----
+  // --------- Dashboard ---------
   let chart;
   async function carregarDash(){
-    const di = document.getElementById('dIni').value;
-    const df = document.getElementById('dFim').value;
-    const grp = document.getElementById('agrup').value;
-    const fCli = document.getElementById('dCliente').value.trim();
+    const di=document.getElementById('dIni').value;
+    const df=document.getElementById('dFim').value;
+    const grp=document.getElementById('agrup').value;
+    const fCli=document.getElementById('dCliente').value.trim();
 
-    // Busca do Supabase; se falhar, usa local
     let base;
     try{
-      let q = supa.from('cm_regs').select('*');
-      if (di) q=q.gte('data', di);
-      if (df) q=q.lte('data', df);
-      if (fCli) q=q.ilike('cliente', `%${fCli}%`);
+      let q=supa.from('cm_regs').select('*');
+      if(di) q=q.gte('data',di);
+      if(df) q=q.lte('data',df);
+      if(fCli) q=q.ilike('cliente',`%${fCli}%`);
       const { data, error } = await q;
-      if (error) throw error;
-      base = data||[];
+      if(error) throw error;
+      base=data||[];
     }catch(e){
-      base = aplicarFiltrosLocal(getDB(), {ini:di,fim:df,q:'',fCliente:fCli});
+      base=aplicarFiltrosLocal(getDB(),{ini:di,fim:df,q:'',fCliente:fCli});
     }
 
-    const map = new Map();
+    const map=new Map();
     base.forEach(r=>{
-      const key = grp==='data' ? r.data : (r[grp]||'(vazio)');
-      map.set(key, (map.get(key)||0) + (r.qtde||0));
+      const key= grp==='data'? r.data : (r[grp]||'(vazio)');
+      map.set(key,(map.get(key)||0)+(r.qtde||0));
     });
+    const labels=Array.from(map.keys()).sort((a,b)=> grp==='data'? a.localeCompare(b) : a.localeCompare(b,'pt-BR',{numeric:true}));
+    const data=labels.map(k=>map.get(k));
+    const soma=data.reduce((a,b)=>a+b,0);
 
-    const labels = Array.from(map.keys()).sort((a,b)=> grp==='data'? a.localeCompare(b) : a.localeCompare(b,'pt-BR',{numeric:true}));
-    const data = labels.map(k=>map.get(k));
-    const soma = data.reduce((a,b)=>a+b,0);
+    document.getElementById('kpiTotal').textContent=soma;
+    document.getElementById('kpiRegs').textContent=base.length;
 
-    document.getElementById('kpiTotal').textContent = soma;
-    document.getElementById('kpiRegs').textContent = base.length;
-
-    const tb = document.querySelector('#tblDash tbody'); tb.innerHTML='';
+    const tb=document.querySelector('#tblDash tbody'); tb.innerHTML='';
     labels.forEach((l,i)=>{
       const tr=document.createElement('tr');
-      tr.innerHTML = `<td>${grp==='data' ? new Date(l).toLocaleDateString('pt-BR') : l}</td><td>${data[i]}</td>`;
+      tr.innerHTML=`<td>${grp==='data'? new Date(l).toLocaleDateString('pt-BR') : l}</td><td>${data[i]}</td>`;
       tb.appendChild(tr);
     });
 
-    const ctx = document.getElementById('graf');
-    if (chart) chart.destroy();
-    if (window.Chart && window.ChartDataLabels){
-      chart = new Chart(ctx, {
-        plugins: [ChartDataLabels],
+    const ctx=document.getElementById('graf');
+    if(chart) chart.destroy();
+    if(window.Chart && window.ChartDataLabels){
+      chart=new Chart(ctx,{
+        plugins:[ChartDataLabels],
         type:'line',
-        data:{ labels: labels.map(x=> grp==='data'? new Date(x).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : x),
-               datasets:[{label:'Paletes', data, tension:.35, borderColor:'#0b6efd', backgroundColor:'rgba(11,110,253,0.12)'}] },
-        options:{responsive:true, plugins:{legend:{display:false}, datalabels:{anchor:'end',align:'top',formatter:(v)=>v}}, scales:{y:{beginAtZero:true}}}
+        data:{labels:labels.map(x=> grp==='data'? new Date(x).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : x),
+              datasets:[{label:'Paletes',data,tension:.35,borderColor:'#0b6efd',backgroundColor:'rgba(11,110,253,.12)'}]},
+        options:{responsive:true,plugins:{legend:{display:false},datalabels:{anchor:'end',align:'top',formatter:v=>v}},scales:{y:{beginAtZero:true}}}
       });
     }
   }
-  document.getElementById('btnDash').onclick = carregarDash;
+  document.getElementById('btnDash').onclick=carregarDash;
 
   // Inicial
   carregarRegistros(); carregarDash();
