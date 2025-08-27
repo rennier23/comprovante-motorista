@@ -5,31 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Comprovante do Motorista</title>
 
-  <!-- Supabase SDK (UMD: evita quebrar o JS no GitHub Pages) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script>
-    // 1) CONFIGURAÇÃO DO SEU PROJETO SUPABASE
-    const SUPABASE_URL = "https://humurozsimozypajncsv.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bXVyb3pzaW1venlwYWpuY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyODE3NzUsImV4cCI6MjA3MDg1Nzc3NX0.uAvgWY1HMvrSGNLaYjaFUQEh5wC8YlfNTRV5J79HVEQ";
-    const TENANT = "SUPERFRIO";      // políticas RLS filtram por esse tenant
-    const BUCKET = "cm_fotos";       // bucket para as fotos (público)
+  <!-- Supabase SDK (UMD) + defer para evitar corrida de carregamento -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
-    if (!window.supabase) {
-      alert("Falha ao carregar o SDK do Supabase. Verifique a internet e recarregue a página.");
-    } else {
-      window.supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    }
-  </script>
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <!-- Chart.js apenas (sem plugin de datalabels p/ evitar quebra) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
-    :root{--pri:#0b6efd;--bg:#f6f7fb;--card:#fff;--bd:#e6e8ef;--success:#10b981;--warning:#f59e0b}
+    :root{--pri:#0b6efd;--bg:#f6f7fb;--card:#fff;--bd:#e6e8ef;--success:#10b981}
     *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,Arial;background:var(--bg )}
     header{padding:14px 16px;background:#fff;border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center}
     header h1{font-size:18px;margin:0 8px 0 0}
@@ -40,28 +26,20 @@
     .row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1 1 220px}
     label{font-size:12px;font-weight:600;display:block;margin:10px 0 6px}
     input,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:10px;background:#fff}
-    .btn{padding:10px 14px;border-radius:10px;border:1px solid var(--pri);background:var(--pri);color:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-size:14px;transition:all 0.2s ease}
-    .btn.compact{padding:8px 12px;font-size:13px}
-    .btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(11,110,253,0.3)}
+    .btn{padding:10px 14px;border-radius:10px;border:1px solid var(--pri);background:var(--pri);color:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-size:14px}
     .btn.secondary{background:#fff;color:#111;border-color:var(--bd)}
-    .btn.secondary:hover{background:#f8f9fa;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
     .upload-container{display:flex;gap:10px;flex-wrap:wrap}
-    .upload-btn{flex:1;min-width:140px;justify-content:center;position:relative;overflow:hidden}
+    .upload-btn{flex:1;min-width:140px;justify-content:center}
     .upload-btn.success{background:var(--success);border-color:var(--success)}
-    .upload-btn.success:hover{box-shadow:0 4px 12px rgba(16,185,129,0.3)}
     .image-preview{margin-top:10px;display:none}
     .image-preview img{max-width:200px;max-height:150px;border-radius:8px;border:1px solid var(--bd)}
-    .image-preview .remove-btn{margin-left:10px;background:#ef4444;border-color:#ef4444;padding:6px 10px;font-size:12px}
+    .image-preview .remove-btn{margin-left:10px;background:#ef4444;border-color:#ef4444;padding:6px 10px;font-size:12px;color:#fff}
     table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--bd);padding:8px 6px;text-align:left;font-size:14px}
-    th{font-size:12px;color:#555}.muted{color:#666;font-size:12px}.tot{font-weight:700}
-    .thumb{width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--bd); cursor: pointer;}
-    @media (max-width: 768px) {.upload-container{flex-direction:column}.upload-btn{min-width:100%}.row{flex-direction:column}.row>*{flex:1 1 auto}}
-    /* leves do dashboard */
-    #tab-dash .card > .row:first-of-type { margin-bottom: 10px; }
-    #tab-dash .card.color-1, #tab-dash .card.color-2 { padding: 12px; border-radius: 12px; }
-    #kpiTotal, #kpiRegs { font-size: 24px !important; }
-    .card.color-1{background:linear-gradient(135deg, #42a5f5 0%, #1976d2 100%);border:none;color:#fff}
-    .card.color-2{background:linear-gradient(135deg, #a55eea 0%, #8b5cf6 100%);border:none;color:#fff}
+    th{font-size:12px;color:#555}.tot{font-weight:700}
+    .thumb{width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--bd);cursor:pointer}
+    @media (max-width: 768px){.row{flex-direction:column}.row>*{flex:1 1 auto}}
+    .kpi{background:linear-gradient(135deg,#42a5f5 0%,#1976d2 100%);color:#fff;border-radius:12px;padding:12px}
+    .kpi2{background:linear-gradient(135deg,#a55eea 0%,#8b5cf6 100%);color:#fff;border-radius:12px;padding:12px}
   </style>
 </head>
 <body>
@@ -80,33 +58,31 @@
     <div class="card">
       <h2><i class="fas fa-file-plus"></i> Novo comprovante</h2>
       <div class="row">
-        <div><label><i class="fas fa-building"></i> Cliente</label><input id="cliente" placeholder="Ex.: SAPORE" required></div>
-        <div><label><i class="fas fa-calendar"></i> Data</label><input id="data" type="date" required></div>
+        <div><label>Cliente</label><input id="cliente" placeholder="Ex.: SAPORE" required></div>
+        <div><label>Data</label><input id="data" type="date" required></div>
       </div>
       <div class="row">
-        <div><label><i class="fas fa-user"></i> Motorista</label><input id="motorista" required></div>
-        <div><label><i class="fas fa-car"></i> Placa</label><input id="placa" required></div>
-        <div><label><i class="fas fa-boxes"></i> QTDE (paletes)</label><input id="qtde" type="number" min="0" step="1" required></div>
+        <div><label>Motorista</label><input id="motorista" required></div>
+        <div><label>Placa</label><input id="placa" required></div>
+        <div><label>QTDE (paletes)</label><input id="qtde" type="number" min="0" step="1" required></div>
       </div>
       <div class="row">
-        <div><label><i class="fas fa-signature"></i> Assinatura/PCO (texto)</label><input id="assinatura" placeholder="Nome do PCO / observação"></div>
+        <div><label>Assinatura/PCO (texto)</label><input id="assinatura" placeholder="Nome do PCO / observação"></div>
         <div>
-          <label><i class="fas fa-camera"></i> Foto do comprovante</label>
-          <div class="upload-container" style="justify-content:flex-start">
-            <button type="button" class="btn upload-btn compact" id="btnCamera" style="flex:none;width:auto;min-width:140px;max-width:200px">
-              <i class="fas fa-camera"></i> Tirar Foto
-            </button>
+          <label>Foto do comprovante</label>
+          <div class="upload-container">
+            <button type="button" class="btn upload-btn" id="btnCamera"><i class="fas fa-camera"></i> Tirar Foto</button>
           </div>
           <input type="file" id="foto" accept="image/*" capture="environment" style="display:none;">
           <div class="image-preview" id="imagePreview">
-            <img id="previewImg" src="" alt="Preview">
-            <button type="button" class="btn remove-btn" id="btnRemove"><i class="fas fa-trash"></i></button>
+            <img id="previewImg" alt="Preview">
+            <button type="button" class="remove-btn" id="btnRemove"><i class="fas fa-trash"></i></button>
           </div>
         </div>
       </div>
-      <div class="row" style="margin-top:12px;justify-content:flex-start;gap:12px">
-        <button class="btn compact" id="btnSalvar" style="flex:none;width:auto;min-width:100px"><i class="fas fa-save"></i> Salvar</button>
-        <button class="btn secondary" id="btnLimpar" style="flex:none;width:auto;min-width:100px"><i class="fas fa-eraser"></i> Limpar</button>
+      <div class="row" style="margin-top:12px;gap:12px">
+        <button class="btn" id="btnSalvar"><i class="fas fa-save"></i> Salvar</button>
+        <button class="btn secondary" id="btnLimpar"><i class="fas fa-eraser"></i> Limpar</button>
       </div>
       <p id="msg" class="muted"></p>
     </div>
@@ -117,10 +93,10 @@
     <div class="card">
       <h2><i class="fas fa-list"></i> Registros</h2>
       <div class="row">
-        <div><label><i class="fas fa-search"></i> Buscar</label><input id="busca" placeholder="cliente, motorista, placa…"></div>
-        <div><label><i class="fas fa-calendar-alt"></i> Data inicial</label><input id="ini" type="date"></div>
-        <div><label><i class="fas fa-calendar-alt"></i> Data final</label><input id="fim" type="date"></div>
-        <div><label><i class="fas fa-building"></i> Cliente</label><input id="fCliente" placeholder="(opcional)"></div>
+        <div><label>Buscar</label><input id="busca" placeholder="cliente, motorista, placa…"></div>
+        <div><label>Data inicial</label><input id="ini" type="date"></div>
+        <div><label>Data final</label><input id="fim" type="date"></div>
+        <div><label>Cliente</label><input id="fCliente" placeholder="(opcional)"></div>
         <div style="align-self:end"><button class="btn" id="btnFiltrar"><i class="fas fa-filter"></i> Aplicar filtros</button></div>
       </div>
       <table id="tbl">
@@ -136,9 +112,9 @@
     <div class="card">
       <h2><i class="fas fa-chart-bar"></i> Dashboard</h2>
       <div class="row">
-        <div><label><i class="fas fa-calendar-alt"></i> Período (início)</label><input id="dIni" type="date"></div>
-        <div><label><i class="fas fa-calendar-alt"></i> Período (fim)</label><input id="dFim" type="date"></div>
-        <div><label><i class="fas fa-layer-group"></i> Agrupar por</label>
+        <div><label>Período (início)</label><input id="dIni" type="date"></div>
+        <div><label>Período (fim)</label><input id="dFim" type="date"></div>
+        <div><label>Agrupar por</label>
           <select id="agrup">
             <option value="cliente">Cliente</option>
             <option value="data">Dia</option>
@@ -146,13 +122,13 @@
             <option value="placa">Placa</option>
           </select>
         </div>
-        <div><label><i class="fas fa-building"></i> Cliente (opcional)</label><input id="dCliente" placeholder="Filtrar por cliente"></div>
+        <div><label>Cliente (opcional)</label><input id="dCliente" placeholder="Filtrar por cliente"></div>
         <div style="align-self:end"><button class="btn" id="btnDash"><i class="fas fa-sync-alt"></i> Atualizar</button></div>
       </div>
 
       <div class="row">
-        <div class="card color-1"><div class="muted"><i class="fas fa-boxes"></i> Total de paletes</div><div style="font-size:28px;font-weight:800" id="kpiTotal">0</div></div>
-        <div class="card color-2"><div class="muted"><i class="fas fa-list-ol"></i> Registros</div><div style="font-size:28px;font-weight:800" id="kpiRegs">0</div></div>
+        <div class="kpi"><div>Total de paletes</div><div style="font-size:24px;font-weight:800" id="kpiTotal">0</div></div>
+        <div class="kpi2"><div>Registros</div><div style="font-size:24px;font-weight:800" id="kpiRegs">0</div></div>
       </div>
 
       <canvas id="graf"></canvas>
@@ -164,272 +140,267 @@
 </main>
 
 <script>
-document.addEventListener('DOMContentLoaded', function(){
-
-  // ---------- Navegação ----------
-  document.querySelectorAll('nav button').forEach(b=>{
-    b.onclick=()=>{
-      document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      document.querySelectorAll('main>section').forEach(s=>s.style.display='none');
-      document.getElementById(b.dataset.tab).style.display='grid';
-    }
+(function(){  // isola o escopo
+  // ====== DIAGNÓSTICO: captura qualquer erro e mostra na tela ======
+  window.addEventListener('error', (e) => {
+    alert('Erro de script: ' + (e?.message || e));
   });
 
-  // ---------- Utils ----------
-  const LSKEY = 'comprovantes_local';
-  const hojeISO = new Date().toISOString().slice(0,10);
-  ['data','ini','fim','dIni','dFim'].forEach(id=>document.getElementById(id).value=hojeISO);
-  const fmtData = s => s ? new Date(s).toLocaleDateString('pt-BR') : "";
-  const fmtDataGrafico = s => s ? new Date(s).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'}) : "";
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      // --------- CONFIG ---------
+      const SUPABASE_URL = "https://humurozsimozypajncsv.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bXVyb3pzaW1venlwYWpuY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyODE3NzUsImV4cCI6MjA3MDg1Nzc3NX0.uAvgWY1HMvrSGNLaYjaFUQEh5wC8YlfNTRV5J79HVEQ";
+      const TENANT = "SUPERFRIO";
+      const BUCKET = "cm_fotos";
 
-  function getDB(){ return JSON.parse(localStorage.getItem(LSKEY)||'[]'); }
-  function setDB(arr){ localStorage.setItem(LSKEY, JSON.stringify(arr)); }
+      // garantia: SDK carregado?
+      if (!window.supabase) {
+        throw new Error("SDK do Supabase não carregou (verifique a internet ou bloqueadores).");
+      }
+      const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // Converte imagem para BLOB JPEG comprimido
-  function fileToBlob(file, maxW=1200, quality=0.8){
-    return new Promise((resolve,reject)=>{
-      const reader=new FileReader();
-      reader.onload=()=>{
-        const img=new Image();
-        img.onload=()=>{
-          const ratio = Math.min(1, maxW/img.width);
-          const w = Math.round(img.width*ratio), h = Math.round(img.height*ratio);
-          const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
-          const ctx=cv.getContext('2d'); ctx.drawImage(img,0,0,w,h);
-          cv.toBlob(b=> b? resolve(b) : reject('toBlob falhou'), 'image/jpeg', quality);
+      // --------- Navegação ---------
+      document.querySelectorAll('nav button').forEach(b=>{
+        b.onclick=()=>{
+          document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+          b.classList.add('active');
+          document.querySelectorAll('main>section').forEach(s=>s.style.display='none');
+          document.getElementById(b.dataset.tab).style.display='grid';
         };
-        img.onerror=reject; img.src=reader.result;
-      };
-      reader.onerror=reject; reader.readAsDataURL(file);
-    });
-  }
+      });
 
-  // ---------- Supabase helpers ----------
-  async function uploadPhoto(id, file){
-    const blob = await fileToBlob(file, 1200, 0.8);
-    const path = `${TENANT}/${id}.jpg`;
-    const up = await supa.storage.from(BUCKET).upload(path, blob, { contentType:'image/jpeg', upsert: true });
-    if(up.error) throw up.error;
-    const { data } = supa.storage.from(BUCKET).getPublicUrl(path);
-    return data.publicUrl;
-  }
+      // --------- Utils ---------
+      const LSKEY = 'comprovantes_local';
+      const hojeISO = new Date().toISOString().slice(0,10);
+      ['data','ini','fim','dIni','dFim'].forEach(id=>document.getElementById(id).value=hojeISO);
+      const fmtData = s => s ? new Date(s).toLocaleDateString('pt-BR') : "";
+      const fmtDataGrafico = s => s ? new Date(s).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}) : "";
 
-  async function insertRow(rec){
-    const { error } = await supa.from('cm_regs').insert(rec);
-    if(error) throw error;
-  }
+      const getDB = () => JSON.parse(localStorage.getItem(LSKEY)||'[]');
+      const setDB = (arr) => localStorage.setItem(LSKEY, JSON.stringify(arr));
 
-  async function fetchRegs({ini,fim,q,fCliente}){
-    let query = supa.from('cm_regs').select('*').order('data',{ascending:false});
-    if(ini) query = query.gte('data', ini);
-    if(fim) query = query.lte('data', fim);
-    if(fCliente) query = query.ilike('cliente', `%${fCliente}%`);
-    if(q){
-      // OR em cliente/motorista/placa
-      query = query.or(`cliente.ilike.%${q}%,motorista.ilike.%${q}%,placa.ilike.%${q}%`);
-    }
-    const { data, error } = await query;
-    if(error) throw error;
-    return data || [];
-  }
+      const fileToBlob = (file, maxW=1200, quality=0.8)=> new Promise((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onload=()=>{
+          const img=new Image();
+          img.onload=()=>{
+            const ratio = Math.min(1, maxW/img.width);
+            const w = Math.round(img.width*ratio), h = Math.round(img.height*ratio);
+            const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+            const ctx=cv.getContext('2d'); ctx.drawImage(img,0,0,w,h);
+            cv.toBlob(b=> b? resolve(b) : reject('toBlob falhou'), 'image/jpeg', quality);
+          };
+          img.onerror=reject; img.src=reader.result;
+        };
+        reader.onerror=reject; reader.readAsDataURL(file);
+      });
 
-  // ---------- Upload UI ----------
-  let selectedFile = null;
-  document.getElementById('btnCamera').onclick = () => document.getElementById('foto').click();
-  document.getElementById('foto').onchange = async (e) => {
-    const file = e.target.files[0]; if(!file) return;
-    selectedFile = file;
-    const reader = new FileReader();
-    reader.onload = () => {
-      document.getElementById('previewImg').src = reader.result;
-      document.getElementById('imagePreview').style.display = 'block';
-      const cameraBtn = document.getElementById('btnCamera');
-      cameraBtn.classList.add('success');
-      cameraBtn.innerHTML = '<i class="fas fa-check"></i> Foto Capturada';
-    };
-    reader.readAsDataURL(file);
-  };
-  document.getElementById('btnRemove').onclick = () => {
-    selectedFile = null;
-    document.getElementById('foto').value = '';
-    document.getElementById('imagePreview').style.display = 'none';
-    const cameraBtn = document.getElementById('btnCamera');
-    cameraBtn.classList.remove('success');
-    cameraBtn.innerHTML = '<i class="fas fa-camera"></i> Tirar Foto';
-  };
+      // --------- Supabase helpers ---------
+      async function uploadPhoto(id, file){
+        const blob = await fileToBlob(file, 1200, 0.8);
+        const path = `${TENANT}/${id}.jpg`;
+        const up = await supa.storage.from(BUCKET).upload(path, blob, { contentType:'image/jpeg', upsert: true });
+        if(up.error) throw up.error;
+        const { data } = supa.storage.from(BUCKET).getPublicUrl(path);
+        return data.publicUrl;
+      }
+      async function insertRow(rec){
+        const { error } = await supa.from('cm_regs').insert(rec);
+        if(error) throw error;
+      }
+      async function fetchRegs({ini,fim,q,fCliente}){
+        let query = supa.from('cm_regs').select('*').order('data',{ascending:false});
+        if(ini) query = query.gte('data', ini);
+        if(fim) query = query.lte('data', fim);
+        if(fCliente) query = query.ilike('cliente', `%${fCliente}%`);
+        if(q) query = query.or(`cliente.ilike.%${q}%,motorista.ilike.%${q}%,placa.ilike.%${q}%`);
+        const { data, error } = await query;
+        if(error) throw error;
+        return data || [];
+      }
 
-  // ---------- Salvar ----------
-  document.getElementById('btnSalvar').onclick = async ()=>{
-    const msg = document.getElementById('msg');
-    msg.textContent = "Processando…";
-
-    const cliente = document.getElementById('cliente').value.trim();
-    const data = document.getElementById('data').value;
-    const motorista = document.getElementById('motorista').value.trim();
-    const placa = document.getElementById('placa').value.trim().toUpperCase();
-    const qtde = parseInt(document.getElementById('qtde').value||"0",10);
-    const assinatura = document.getElementById('assinatura').value.trim();
-
-    if(!cliente || !data || !motorista || !placa || !qtde || !selectedFile){
-      msg.textContent = "Preencha todos os campos e selecione uma foto.";
-      return;
-    }
-
-    const id = Date.now();
-
-    try{
-      const foto_url = await uploadPhoto(id, selectedFile);
-      await insertRow({ id, data, cliente, motorista, placa, qtde, assinatura, foto_url, tenant: TENANT });
-      msg.textContent = "Registro salvo (Supabase).";
-      document.getElementById('btnLimpar').click();
-      await carregarRegistros();
-      await carregarDash();
-    }catch(e){
-      console.warn('Falha Supabase, usando fallback local:', e?.message||e);
-      // fallback local
-      try{
+      // --------- Upload UI ---------
+      let selectedFile = null;
+      btnCamera.onclick = () => foto.click();
+      foto.onchange = (e) => {
+        const file = e.target.files?.[0];
+        if(!file) return;
+        selectedFile = file;
         const reader = new FileReader();
-        reader.onload = ()=>{
-          const foto_url = reader.result;
-          const db = getDB(); db.push({ id, data, cliente, motorista, placa, qtde, assinatura, foto_url });
-          setDB(db);
-          msg.textContent = "Registro salvo localmente (offline).";
-          document.getElementById('btnLimpar').click();
-          carregarRegistros(); carregarDash();
+        reader.onload = () => {
+          previewImg.src = reader.result;
+          imagePreview.style.display = 'block';
+          btnCamera.classList.add('success');
+          btnCamera.innerHTML = '<i class="fas fa-check"></i> Foto Capturada';
         };
-        reader.readAsDataURL(selectedFile);
-      }catch(err){
-        msg.textContent = "Erro ao salvar: " + (err?.message||err);
-      }
-    }
-  };
+        reader.readAsDataURL(file);
+      };
+      btnRemove.onclick = () => {
+        selectedFile = null; foto.value = '';
+        imagePreview.style.display = 'none';
+        btnCamera.classList.remove('success');
+        btnCamera.innerHTML = '<i class="fas fa-camera"></i> Tirar Foto';
+      };
 
-  document.getElementById('btnLimpar').onclick = ()=>{
-    ['cliente','data','motorista','placa','qtde','assinatura'].forEach(id=>{
-      document.getElementById(id).value="";
-    });
-    document.getElementById('data').value = hojeISO;
-    document.getElementById('msg').textContent="";
-    document.getElementById('btnRemove').click();
-  };
+      // --------- Salvar ---------
+      btnSalvar.onclick = async ()=>{
+        try{
+          msg.textContent = "Processando…";
+          const cliente = document.getElementById('cliente').value.trim();
+          const data = document.getElementById('data').value;
+          const motorista = document.getElementById('motorista').value.trim();
+          const placa = document.getElementById('placa').value.trim().toUpperCase();
+          const qtde = parseInt(document.getElementById('qtde').value||"0",10);
+          const assinatura = document.getElementById('assinatura').value.trim();
 
-  // ---------- Registros ----------
-  async function carregarRegistros(){
-    const tb = document.querySelector('#tbl tbody');
-    tb.innerHTML = '<tr><td colspan="6">Carregando…</td></tr>';
+          if(!cliente || !data || !motorista || !placa || !qtde || !selectedFile){
+            msg.textContent = "Preencha todos os campos e selecione uma foto.";
+            return;
+          }
 
-    const filtros = {
-      q: document.getElementById('busca').value.trim().toLowerCase(),
-      ini: document.getElementById('ini').value,
-      fim: document.getElementById('fim').value,
-      fCliente: document.getElementById('fCliente').value.trim().toLowerCase()
-    };
+          const id = Date.now();
+          try{
+            const foto_url = await uploadPhoto(id, selectedFile);
+            await insertRow({ id, data, cliente, motorista, placa, qtde, assinatura, foto_url, tenant: TENANT });
+            msg.textContent = "Registro salvo (Supabase).";
+          }catch(errSupabase){
+            // fallback local
+            console.warn('Supabase falhou, salvando local:', errSupabase);
+            const reader = new FileReader();
+            reader.onload = ()=>{
+              const foto_url = reader.result;
+              const db = getDB(); db.push({ id, data, cliente, motorista, placa, qtde, assinatura, foto_url });
+              setDB(db);
+              msg.textContent = "Registro salvo localmente (offline).";
+              carregarRegistros(); carregarDash();
+            };
+            reader.readAsDataURL(selectedFile);
+            return;
+          }
 
-    let rows = [];
-    try{
-      rows = await fetchRegs(filtros);
-    }catch(e){
-      console.warn('Falha ao buscar no Supabase, caindo para local:', e?.message||e);
-      // local
-      rows = getDB().filter(r=>{
-        if(filtros.ini && r.data < filtros.ini) return false;
-        if(filtros.fim && r.data > filtros.fim) return false;
-        if(filtros.fCliente && !r.cliente?.toLowerCase().includes(filtros.fCliente)) return false;
-        if(filtros.q){
-          const blob = `${r.cliente} ${r.motorista} ${r.placa}`.toLowerCase();
-          if(!blob.includes(filtros.q)) return false;
+          btnLimpar.click();
+          await carregarRegistros(); await carregarDash();
+        }catch(e){ alert('Erro ao salvar: '+(e?.message||e)); }
+      };
+
+      btnLimpar.onclick = ()=>{
+        ['cliente','data','motorista','placa','qtde','assinatura'].forEach(id=>{
+          document.getElementById(id).value="";
+        });
+        data.value = hojeISO; msg.textContent="";
+        btnRemove.click();
+      };
+
+      // --------- Registros ---------
+      async function carregarRegistros(){
+        const tb = document.querySelector('#tbl tbody');
+        tb.innerHTML = '<tr><td colspan="6">Carregando…</td></tr>';
+
+        const filtros = {
+          q: busca.value.trim().toLowerCase(),
+          ini: ini.value,
+          fim: fim.value,
+          fCliente: fCliente.value.trim().toLowerCase()
+        };
+
+        let rows=[];
+        try{ rows = await fetchRegs(filtros); }
+        catch(e){
+          console.warn('Busca remota falhou, usando local:', e);
+          rows = getDB().filter(r=>{
+            if(filtros.ini && r.data < filtros.ini) return false;
+            if(filtros.fim && r.data > filtros.fim) return false;
+            if(filtros.fCliente && !r.cliente?.toLowerCase().includes(filtros.fCliente)) return false;
+            if(filtros.q){
+              const blob = `${r.cliente} ${r.motorista} ${r.placa}`.toLowerCase();
+              if(!blob.includes(filtros.q)) return false;
+            }
+            return true;
+          }).sort((a,b)=>b.data.localeCompare(a.data) || b.id-a.id);
         }
-        return true;
-      }).sort((a,b)=>b.data.localeCompare(a.data) || b.id-a.id);
-    }
 
-    tb.innerHTML = '';
-    let tot=0;
-    rows.forEach(r=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${fmtData(r.data)}</td>
-        <td>${r.cliente||''}</td>
-        <td>${r.motorista||''}</td>
-        <td>${r.placa||''}</td>
-        <td>${r.qtde||0}</td>
-        <td>${r.foto_url ? `<img class="thumb" src="${r.foto_url}">` : ''}</td>`;
-      if (r.foto_url) {
-        tr.querySelector('.thumb').onclick = () => {
-          const win = window.open("", "_blank");
-          win.document.write(\`<body style="margin:0; background:#222;"><img src="${r.foto_url}" style="max-width:100%; height:auto; display:block; margin:auto;"></body>\`);
-          win.document.title = \`Comprovante: ${r.cliente||''} - ${fmtData(r.data)}\`;
-        };
+        tb.innerHTML=''; let tot=0;
+        rows.forEach(r=>{
+          const tr=document.createElement('tr');
+          tr.innerHTML = `
+            <td>${fmtData(r.data)}</td>
+            <td>${r.cliente||''}</td>
+            <td>${r.motorista||''}</td>
+            <td>${r.placa||''}</td>
+            <td>${r.qtde||0}</td>
+            <td>${r.foto_url ? `<img class="thumb" src="${r.foto_url}">` : ''}</td>`;
+          if(r.foto_url){
+            tr.querySelector('.thumb').onclick=()=>{
+              const win = window.open("", "_blank");
+              win.document.write(`<body style="margin:0;background:#222;"><img src="${r.foto_url}" style="max-width:100%;height:auto;display:block;margin:auto;"></body>`);
+              win.document.title = `Comprovante: ${r.cliente||''} - ${fmtData(r.data)}`;
+            };
+          }
+          tb.appendChild(tr); tot += (r.qtde||0);
+        });
+        totQtde.textContent = tot;
       }
-      tb.appendChild(tr); tot += (r.qtde||0);
-    });
-    document.getElementById('totQtde').textContent = tot;
-  }
-  document.getElementById('btnFiltrar').onclick = carregarRegistros;
+      btnFiltrar.onclick = carregarRegistros;
 
-  // ---------- Dashboard ----------
-  let chart;
-  async function carregarDash(){
-    let base=[];
-    try{
-      base = await fetchRegs({
-        ini: document.getElementById('dIni').value,
-        fim: document.getElementById('dFim').value,
-        q: '',
-        fCliente: document.getElementById('dCliente').value.trim().toLowerCase()
-      });
-    }catch(e){
-      // offline: usa local
-      const di = document.getElementById('dIni').value;
-      const df = document.getElementById('dFim').value;
-      const fCli = document.getElementById('dCliente').value.trim().toLowerCase();
-      base = getDB().filter(r=>{
-        if(di && r.data < di) return false;
-        if(df && r.data > df) return false;
-        if(fCli && !r.cliente?.toLowerCase().includes(fCli)) return false;
-        return true;
-      });
+      // --------- Dashboard ---------
+      let chart;
+      async function carregarDash(){
+        let base=[];
+        try{
+          base = await fetchRegs({
+            ini: dIni.value, fim: dFim.value, q:'', fCliente: dCliente.value.trim().toLowerCase()
+          });
+        }catch(e){
+          // offline: local
+          const di=dIni.value, df=dFim.value, fCli=dCliente.value.trim().toLowerCase();
+          base = getDB().filter(r=>{
+            if(di && r.data < di) return false;
+            if(df && r.data > df) return false;
+            if(fCli && !r.cliente?.toLowerCase().includes(fCli)) return false;
+            return true;
+          });
+        }
+
+        const grp = agrup.value;
+        const map = new Map();
+        base.forEach(r=>{
+          const key = grp==='data' ? r.data : (r[grp]||'(vazio)');
+          map.set(key, (map.get(key)||0) + (r.qtde||0));
+        });
+
+        const labels = Array.from(map.keys()).sort((a,b)=> grp==='data' ? a.localeCompare(b) : a.localeCompare(b,'pt-BR',{numeric:true}));
+        const dataArr = labels.map(k=>map.get(k));
+        const soma = dataArr.reduce((a,b)=>a+b,0);
+        kpiTotal.textContent = soma;
+        kpiRegs.textContent = base.length;
+
+        const tb=document.querySelector('#tblDash tbody'); tb.innerHTML='';
+        labels.forEach((l,i)=>{
+          const tr=document.createElement('tr');
+          tr.innerHTML = `<td>${grp==='data'?fmtData(l):l}</td><td>${dataArr[i]}</td>`;
+          tb.appendChild(tr);
+        });
+
+        const ctx=graf.getContext('2d');
+        if(chart) chart.destroy();
+        chart = new Chart(ctx,{
+          type:'line',
+          data:{ labels: labels.map(x=> grp==='data'?fmtDataGrafico(x):x),
+                 datasets:[{label:'Paletes', data: dataArr, tension:.35}] },
+          options:{ responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+        });
+      }
+      btnDash.onclick = carregarDash;
+
+      // --------- inicial ---------
+      await carregarRegistros(); await carregarDash();
+
+    } catch (e) {
+      alert('Falha na inicialização: ' + (e?.message || e));
     }
-
-    const grp = document.getElementById('agrup').value;
-    const map = new Map();
-    base.forEach(r=>{
-      const key = grp==='data' ? r.data : (r[grp]||'(vazio)');
-      map.set(key, (map.get(key)||0) + (r.qtde||0));
-    });
-
-    const labels = Array.from(map.keys()).sort((a,b)=> grp==='data' ? a.localeCompare(b) : a.localeCompare(b,'pt-BR',{numeric:true}));
-    const data = labels.map(k=>map.get(k));
-    const soma = data.reduce((a,b)=>a+b,0);
-
-    document.getElementById('kpiTotal').textContent = soma;
-    document.getElementById('kpiRegs').textContent = base.length;
-
-    // tabela
-    const tb = document.querySelector('#tblDash tbody'); tb.innerHTML="";
-    labels.forEach((l,i)=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML = `<td>${grp==='data'?fmtData(l):l}</td><td>${data[i]}</td>`;
-      tb.appendChild(tr);
-    });
-
-    // gráfico
-    const ctx = document.getElementById('graf');
-    if(chart) chart.destroy();
-    chart = new Chart(ctx, {
-      plugins: [ChartDataLabels],
-      type:'line',
-      data:{ labels: labels.map(x=> grp==='data'?fmtDataGrafico(x):x), datasets:[{label:'Paletes', data, tension: 0.4, fill: false, borderColor: 'var(--pri)', backgroundColor: 'var(--pri)'}] },
-      options:{ responsive:true, plugins:{legend:{display:false}, datalabels: { anchor: 'end', align: 'top', formatter: (value) => value } }, scales:{y:{beginAtZero:true}} }
-    });
-  }
-
-  // inicial
-  carregarRegistros(); carregarDash();
-  document.getElementById('btnDash').onclick = carregarDash;
-
-});
+  });
+})();
 </script>
 </body>
 </html>
